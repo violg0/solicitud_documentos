@@ -5,7 +5,7 @@ import '../components/documento_card.dart';
 import '../models/documento.dart';
 import '../services/documento_service.dart';
 import 'detalle_solicitud.dart';
-
+import '../validators/solicitud_validators.dart';
 
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({super.key});
@@ -30,7 +30,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   @override
   void initState() {
     super.initState();
-    _documentoService= DocumentoService('https://6aee1a6ca677fe0fc14fc05f.mockapii.io/documentos');
+    _documentoService= DocumentoService('https://6aee1a6ca677fe0fc14fc05f.mockapi.io/documentos');
     _futureDocumentos = _documentoService.getDocumentos();  }
 
   @override
@@ -78,6 +78,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 subtitle: Text(doc.descripcion),
                 enabled: doc.habilitado,
                 trailing: doc.habilitado ? null : const Text('No disponible'),
+            
               );
             },
           );

@@ -35,10 +35,10 @@ class DocumentoService {
         throw const ApiException("Server does not exist");
       }
       throw ApiException('Error HTTP ${response.statusCode}');
-    } on SocketException {
+    } on http.ClientException {
       throw const ApiException('No hay conexión a internet');
     } on TimeoutException {
-      throw const ApiException('El servidor a esperado mucho tiempo');
+      throw const ApiException('El servidor ha esperado demasiado tiempo');
     }
   }
 
