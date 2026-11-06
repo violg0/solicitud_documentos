@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "172281742677",
+    "project_id": "solicitudes-documentos",
+    "storage_bucket": "solicitudes-documentos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:172281742677:android:233b9b3561b2b973cc9bdc",
+        "android_client_info": {
+          "package_name": "com.example.solicitud_documentos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNtvaHIzVMIFgUoW9k0zfDqG3IKv3-Reo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
