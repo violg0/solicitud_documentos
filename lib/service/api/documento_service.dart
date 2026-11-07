@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import '../models/documento.dart';
+import '../../models/documento.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -12,17 +12,18 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-
 class DocumentoService {
   final String baseUrl;
 
   DocumentoService(this.baseUrl);
 
   Future<List<Documento>> getDocumentos() async {
-    try{
+    try {
       //peticion http con limite de tiempo
-      final response = await http.get(Uri.parse(baseUrl)).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200){
+      final response = await http
+          .get(Uri.parse(baseUrl))
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((item) => Documento.fromJson(item)).toList();
       }
@@ -41,5 +42,4 @@ class DocumentoService {
       throw const ApiException('El servidor ha esperado demasiado tiempo');
     }
   }
-
 }

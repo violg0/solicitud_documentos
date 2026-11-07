@@ -1,3 +1,5 @@
+import 'estados.dart';
+
 class Motivo {
   final String id;
   final String idSolicitud;
@@ -23,4 +25,13 @@ class Motivo {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'idSolicitud': idSolicitud,
+      'mensaje': mensaje,
+      'estado': estado,
+      'fechaCreacion': fechaCreacion.toIso8601String(),
+    };
+  }
 }

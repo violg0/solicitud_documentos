@@ -1,3 +1,5 @@
+import 'rol.dart';
+
 class Usuario {
   final String uid;
   final String nombre;
@@ -9,23 +11,18 @@ class Usuario {
     required this.nombre,
     required this.email,
     required this.rol,
-    required this.createdAt,
-    required this.updatedAt,
   });
 
-  factory Usuario.firebase({
-    required String uid,
-    required String nombre,
-    required String email,
-    Rol rol = Rol.usuario,
-  }) {
-    final ahora = DateTime.now();
+  factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
-      uid: uid,
-      nombre: nombre,
-      email: email,
-      rol: rol
+      uid: json['uid'],
+      nombre: json['nombre'],
+      email: json['email'],
+      rol: json['rol'],
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {'uid': uid, 'nombre': nombre, 'email': email, 'rol': rol.name};
+  }
 }
