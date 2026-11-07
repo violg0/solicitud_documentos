@@ -9,24 +9,26 @@ class UsuarioService {
       FirebaseFirestore.instance.collection('Usuarios');
 
   Future<List<Usuario>> listar() async {
-    final snapshot = await _coleccion.orderBy('id').get();
-    return snapshot.docs.map((d) => Usuario.fromJson(d.data())).toList();
+    final snapshot = await _coleccion.get();
+    return snapshot.docs
+        .map((d) => Usuario.fromJson({...d.data(), 'uid': d.id}))
+        .toList();
   }
 
-  Future<Usuario?> obtenerPorId(int id) async {
-    final doc = await _coleccion.doc(id.toString()).get();
+  Future<Usuario?> obtenerPorId(String id) async {
+    final doc = await _coleccion.doc(id).get();
     final data = doc.data();
-    return data == null ? null : Usuario.fromJson(data);
+    return data == null ? null : Usuario.fromJson({...data, 'uid': doc.id});
   }
 
-  Future<void> guardar(Usuario Usuario) async {
+  Future<void> guardar(Usuario usuario) async {
     await _coleccion
-        .doc(Usuario.uid.toString())
-        .set(Usuario.toJson())
+        .doc(usuario.uid)
+        .set(usuario.toJson()..remove('uid'))
         .timeout(_tiempoMaximo);
   }
 
-  Future<void> eliminar(int id) {
-    return _coleccion.doc(id.toString()).delete();
+  Future<void> eliminar(String id) {
+    return _coleccion.doc(id).delete();
   }
 }

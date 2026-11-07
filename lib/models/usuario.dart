@@ -18,7 +18,7 @@ class Usuario {
       uid: json['uid'],
       nombre: json['nombre'],
       email: json['email'],
-      rol: json['rol'],
+      rol: Rol.values.byName(json['rol']),
     );
   }
 

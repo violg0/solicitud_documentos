@@ -20,7 +20,7 @@ class Motivo {
       id: json['id'],
       idSolicitud: json['idSolicitud'],
       mensaje: json['mensaje'],
-      estado: json['estado'],
+      estado: EstadoSolicitud.values.byName(json['estado']),
       fechaCreacion: DateTime.parse(json['fechaCreacion']),
     );
   }
@@ -30,7 +30,7 @@ class Motivo {
       'id': id,
       'idSolicitud': idSolicitud,
       'mensaje': mensaje,
-      'estado': estado,
+      'estado': estado.name,
       'fechaCreacion': fechaCreacion.toIso8601String(),
     };
   }

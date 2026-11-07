@@ -9,30 +9,34 @@ class MotivoService {
       FirebaseFirestore.instance.collection('Motivos');
 
   Future<List<Motivo>> listar() async {
-    final snapshot = await _coleccion.orderBy('id').get();
-    return snapshot.docs.map((d) => Motivo.fromJson(d.data())).toList();
+    final snapshot = await _coleccion.get();
+    return snapshot.docs
+        .map((d) => Motivo.fromJson({...d.data(), 'id': d.id}))
+        .toList();
   }
 
-  Future<List<Motivo>> listarPorSolicitud(int idSolicitud) async {
+  Future<List<Motivo>> listarPorSolicitud(String idSolicitud) async {
     final snapshot = await _coleccion
-        .where('id_solicitud', isEqualTo: idSolicitud)
+        .where('idSolicitud', isEqualTo: idSolicitud)
         .get();
-    return snapshot.docs.map((d) => Motivo.fromJson(d.data())).toList();
+    return snapshot.docs
+        .map((d) => Motivo.fromJson({...d.data(), 'id': d.id}))
+        .toList();
   }
 
-  Future<Motivo?> obtenerPorId(int id) async {
-    final doc = await _coleccion.doc(id.toString()).get();
+  Future<Motivo?> obtenerPorId(String id) async {
+    final doc = await _coleccion.doc(id).get();
     final data = doc.data();
-    return data == null ? null : Motivo.fromJson(data);
+    return data == null ? null : Motivo.fromJson({...data, 'id': doc.id});
   }
 
-  Future<String> guardar(Motivo solicitud) async {
+  Future<String> guardar(Motivo motivo) async {
     final docRef = _coleccion.doc(); // Firestore genera el ID
-    await docRef.set(solicitud.toJson()..remove('id')).timeout(_tiempoMaximo);
+    await docRef.set(motivo.toJson()..remove('id')).timeout(_tiempoMaximo);
     return docRef.id;
   }
 
-  Future<void> eliminar(int id) {
-    return _coleccion.doc(id.toString()).delete();
+  Future<void> eliminar(String id) {
+    return _coleccion.doc(id).delete();
   }
 }
