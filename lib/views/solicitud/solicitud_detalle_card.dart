@@ -120,7 +120,7 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
           doc.imagen,
           height: 160,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(Icons.description, size: 80),
+          errorBuilder: (_, _, _) => const Icon(Icons.description, size: 80),
         ),
         const SizedBox(height: 12),
         Text(doc.nombre, style: Theme.of(context).textTheme.headlineSmall),

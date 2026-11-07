@@ -24,7 +24,7 @@ class Solicitud {
       idUsuario: json['idUsuario'],
       periodo: json['periodo'],
       estado: EstadoSolicitud.values.byName(json['estado']),
-      fechaModificacion: DateTime(json['fecha-modificacion']),
+      fechaModificacion: DateTime.parse(json['fechaModificacion']),
     );
   }
 
@@ -35,7 +35,7 @@ class Solicitud {
       'idUsuario': idUsuario,
       'periodo': periodo,
       'estado': estado.name,
-      'fecha-modificacion': fechaModificacion,
+      'fechaModificacion': fechaModificacion.toIso8601String(),
     };
   }
 }
