@@ -7,6 +7,7 @@ class Solicitudes extends Table {
   TextColumn get idUsuario => text()();
   TextColumn get periodo => text()();
   TextColumn get estado => text()();
+  DateTimeColumn get fechaModificacion => dateTime()();
   //debt sync
   BoolColumn get pendingSync => boolean()
                                 .withDefault(const Constant(true))();

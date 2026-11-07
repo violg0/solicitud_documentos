@@ -60,6 +60,18 @@ class $SolicitudesTable extends Solicitudes
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _fechaModificacionMeta = const VerificationMeta(
+    'fechaModificacion',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fechaModificacion =
+      GeneratedColumn<DateTime>(
+        'fecha_modificacion',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
   static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
     'pendingSync',
   );
@@ -82,6 +94,7 @@ class $SolicitudesTable extends Solicitudes
     idUsuario,
     periodo,
     estado,
+    fechaModificacion,
     pendingSync,
   ];
   @override
@@ -136,6 +149,17 @@ class $SolicitudesTable extends Solicitudes
     } else if (isInserting) {
       context.missing(_estadoMeta);
     }
+    if (data.containsKey('fecha_modificacion')) {
+      context.handle(
+        _fechaModificacionMeta,
+        fechaModificacion.isAcceptableOrUnknown(
+          data['fecha_modificacion']!,
+          _fechaModificacionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fechaModificacionMeta);
+    }
     if (data.containsKey('pending_sync')) {
       context.handle(
         _pendingSyncMeta,
@@ -174,6 +198,10 @@ class $SolicitudesTable extends Solicitudes
         DriftSqlType.string,
         data['${effectivePrefix}estado'],
       )!,
+      fechaModificacion: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fecha_modificacion'],
+      )!,
       pendingSync: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}pending_sync'],
@@ -193,6 +221,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
   final String idUsuario;
   final String periodo;
   final String estado;
+  final DateTime fechaModificacion;
   final bool pendingSync;
   const SolicitudRow({
     required this.id,
@@ -200,6 +229,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     required this.idUsuario,
     required this.periodo,
     required this.estado,
+    required this.fechaModificacion,
     required this.pendingSync,
   });
   @override
@@ -210,6 +240,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     map['id_usuario'] = Variable<String>(idUsuario);
     map['periodo'] = Variable<String>(periodo);
     map['estado'] = Variable<String>(estado);
+    map['fecha_modificacion'] = Variable<DateTime>(fechaModificacion);
     map['pending_sync'] = Variable<bool>(pendingSync);
     return map;
   }
@@ -221,6 +252,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       idUsuario: Value(idUsuario),
       periodo: Value(periodo),
       estado: Value(estado),
+      fechaModificacion: Value(fechaModificacion),
       pendingSync: Value(pendingSync),
     );
   }
@@ -236,6 +268,9 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       idUsuario: serializer.fromJson<String>(json['idUsuario']),
       periodo: serializer.fromJson<String>(json['periodo']),
       estado: serializer.fromJson<String>(json['estado']),
+      fechaModificacion: serializer.fromJson<DateTime>(
+        json['fechaModificacion'],
+      ),
       pendingSync: serializer.fromJson<bool>(json['pendingSync']),
     );
   }
@@ -248,6 +283,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       'idUsuario': serializer.toJson<String>(idUsuario),
       'periodo': serializer.toJson<String>(periodo),
       'estado': serializer.toJson<String>(estado),
+      'fechaModificacion': serializer.toJson<DateTime>(fechaModificacion),
       'pendingSync': serializer.toJson<bool>(pendingSync),
     };
   }
@@ -258,6 +294,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     String? idUsuario,
     String? periodo,
     String? estado,
+    DateTime? fechaModificacion,
     bool? pendingSync,
   }) => SolicitudRow(
     id: id ?? this.id,
@@ -265,6 +302,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     idUsuario: idUsuario ?? this.idUsuario,
     periodo: periodo ?? this.periodo,
     estado: estado ?? this.estado,
+    fechaModificacion: fechaModificacion ?? this.fechaModificacion,
     pendingSync: pendingSync ?? this.pendingSync,
   );
   SolicitudRow copyWithCompanion(SolicitudesCompanion data) {
@@ -276,6 +314,9 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       idUsuario: data.idUsuario.present ? data.idUsuario.value : this.idUsuario,
       periodo: data.periodo.present ? data.periodo.value : this.periodo,
       estado: data.estado.present ? data.estado.value : this.estado,
+      fechaModificacion: data.fechaModificacion.present
+          ? data.fechaModificacion.value
+          : this.fechaModificacion,
       pendingSync: data.pendingSync.present
           ? data.pendingSync.value
           : this.pendingSync,
@@ -290,14 +331,22 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
           ..write('idUsuario: $idUsuario, ')
           ..write('periodo: $periodo, ')
           ..write('estado: $estado, ')
+          ..write('fechaModificacion: $fechaModificacion, ')
           ..write('pendingSync: $pendingSync')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, idDocumento, idUsuario, periodo, estado, pendingSync);
+  int get hashCode => Object.hash(
+    id,
+    idDocumento,
+    idUsuario,
+    periodo,
+    estado,
+    fechaModificacion,
+    pendingSync,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -307,6 +356,7 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
           other.idUsuario == this.idUsuario &&
           other.periodo == this.periodo &&
           other.estado == this.estado &&
+          other.fechaModificacion == this.fechaModificacion &&
           other.pendingSync == this.pendingSync);
 }
 
@@ -316,6 +366,7 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
   final Value<String> idUsuario;
   final Value<String> periodo;
   final Value<String> estado;
+  final Value<DateTime> fechaModificacion;
   final Value<bool> pendingSync;
   final Value<int> rowid;
   const SolicitudesCompanion({
@@ -324,6 +375,7 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     this.idUsuario = const Value.absent(),
     this.periodo = const Value.absent(),
     this.estado = const Value.absent(),
+    this.fechaModificacion = const Value.absent(),
     this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -333,19 +385,22 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     required String idUsuario,
     required String periodo,
     required String estado,
+    required DateTime fechaModificacion,
     this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        idDocumento = Value(idDocumento),
        idUsuario = Value(idUsuario),
        periodo = Value(periodo),
-       estado = Value(estado);
+       estado = Value(estado),
+       fechaModificacion = Value(fechaModificacion);
   static Insertable<SolicitudRow> custom({
     Expression<String>? id,
     Expression<String>? idDocumento,
     Expression<String>? idUsuario,
     Expression<String>? periodo,
     Expression<String>? estado,
+    Expression<DateTime>? fechaModificacion,
     Expression<bool>? pendingSync,
     Expression<int>? rowid,
   }) {
@@ -355,6 +410,7 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
       if (idUsuario != null) 'id_usuario': idUsuario,
       if (periodo != null) 'periodo': periodo,
       if (estado != null) 'estado': estado,
+      if (fechaModificacion != null) 'fecha_modificacion': fechaModificacion,
       if (pendingSync != null) 'pending_sync': pendingSync,
       if (rowid != null) 'rowid': rowid,
     });
@@ -366,6 +422,7 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     Value<String>? idUsuario,
     Value<String>? periodo,
     Value<String>? estado,
+    Value<DateTime>? fechaModificacion,
     Value<bool>? pendingSync,
     Value<int>? rowid,
   }) {
@@ -375,6 +432,7 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
       idUsuario: idUsuario ?? this.idUsuario,
       periodo: periodo ?? this.periodo,
       estado: estado ?? this.estado,
+      fechaModificacion: fechaModificacion ?? this.fechaModificacion,
       pendingSync: pendingSync ?? this.pendingSync,
       rowid: rowid ?? this.rowid,
     );
@@ -398,6 +456,9 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     if (estado.present) {
       map['estado'] = Variable<String>(estado.value);
     }
+    if (fechaModificacion.present) {
+      map['fecha_modificacion'] = Variable<DateTime>(fechaModificacion.value);
+    }
     if (pendingSync.present) {
       map['pending_sync'] = Variable<bool>(pendingSync.value);
     }
@@ -415,6 +476,849 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
           ..write('idUsuario: $idUsuario, ')
           ..write('periodo: $periodo, ')
           ..write('estado: $estado, ')
+          ..write('fechaModificacion: $fechaModificacion, ')
+          ..write('pendingSync: $pendingSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MotivosTable extends Motivos with TableInfo<$MotivosTable, MotivoRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MotivosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idSolicitudMeta = const VerificationMeta(
+    'idSolicitud',
+  );
+  @override
+  late final GeneratedColumn<String> idSolicitud = GeneratedColumn<String>(
+    'id_solicitud',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mensajeMeta = const VerificationMeta(
+    'mensaje',
+  );
+  @override
+  late final GeneratedColumn<String> mensaje = GeneratedColumn<String>(
+    'mensaje',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _estadoMeta = const VerificationMeta('estado');
+  @override
+  late final GeneratedColumn<String> estado = GeneratedColumn<String>(
+    'estado',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fechaCreacionMeta = const VerificationMeta(
+    'fechaCreacion',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fechaCreacion =
+      GeneratedColumn<DateTime>(
+        'fecha_creacion',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
+    'pendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingSync = GeneratedColumn<bool>(
+    'pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    idSolicitud,
+    mensaje,
+    estado,
+    fechaCreacion,
+    pendingSync,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'motivos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MotivoRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('id_solicitud')) {
+      context.handle(
+        _idSolicitudMeta,
+        idSolicitud.isAcceptableOrUnknown(
+          data['id_solicitud']!,
+          _idSolicitudMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_idSolicitudMeta);
+    }
+    if (data.containsKey('mensaje')) {
+      context.handle(
+        _mensajeMeta,
+        mensaje.isAcceptableOrUnknown(data['mensaje']!, _mensajeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mensajeMeta);
+    }
+    if (data.containsKey('estado')) {
+      context.handle(
+        _estadoMeta,
+        estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_estadoMeta);
+    }
+    if (data.containsKey('fecha_creacion')) {
+      context.handle(
+        _fechaCreacionMeta,
+        fechaCreacion.isAcceptableOrUnknown(
+          data['fecha_creacion']!,
+          _fechaCreacionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fechaCreacionMeta);
+    }
+    if (data.containsKey('pending_sync')) {
+      context.handle(
+        _pendingSyncMeta,
+        pendingSync.isAcceptableOrUnknown(
+          data['pending_sync']!,
+          _pendingSyncMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MotivoRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MotivoRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      idSolicitud: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_solicitud'],
+      )!,
+      mensaje: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mensaje'],
+      )!,
+      estado: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}estado'],
+      )!,
+      fechaCreacion: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fecha_creacion'],
+      )!,
+      pendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_sync'],
+      )!,
+    );
+  }
+
+  @override
+  $MotivosTable createAlias(String alias) {
+    return $MotivosTable(attachedDatabase, alias);
+  }
+}
+
+class MotivoRow extends DataClass implements Insertable<MotivoRow> {
+  final String id;
+  final String idSolicitud;
+  final String mensaje;
+  final String estado;
+  final DateTime fechaCreacion;
+  final bool pendingSync;
+  const MotivoRow({
+    required this.id,
+    required this.idSolicitud,
+    required this.mensaje,
+    required this.estado,
+    required this.fechaCreacion,
+    required this.pendingSync,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['id_solicitud'] = Variable<String>(idSolicitud);
+    map['mensaje'] = Variable<String>(mensaje);
+    map['estado'] = Variable<String>(estado);
+    map['fecha_creacion'] = Variable<DateTime>(fechaCreacion);
+    map['pending_sync'] = Variable<bool>(pendingSync);
+    return map;
+  }
+
+  MotivosCompanion toCompanion(bool nullToAbsent) {
+    return MotivosCompanion(
+      id: Value(id),
+      idSolicitud: Value(idSolicitud),
+      mensaje: Value(mensaje),
+      estado: Value(estado),
+      fechaCreacion: Value(fechaCreacion),
+      pendingSync: Value(pendingSync),
+    );
+  }
+
+  factory MotivoRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MotivoRow(
+      id: serializer.fromJson<String>(json['id']),
+      idSolicitud: serializer.fromJson<String>(json['idSolicitud']),
+      mensaje: serializer.fromJson<String>(json['mensaje']),
+      estado: serializer.fromJson<String>(json['estado']),
+      fechaCreacion: serializer.fromJson<DateTime>(json['fechaCreacion']),
+      pendingSync: serializer.fromJson<bool>(json['pendingSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'idSolicitud': serializer.toJson<String>(idSolicitud),
+      'mensaje': serializer.toJson<String>(mensaje),
+      'estado': serializer.toJson<String>(estado),
+      'fechaCreacion': serializer.toJson<DateTime>(fechaCreacion),
+      'pendingSync': serializer.toJson<bool>(pendingSync),
+    };
+  }
+
+  MotivoRow copyWith({
+    String? id,
+    String? idSolicitud,
+    String? mensaje,
+    String? estado,
+    DateTime? fechaCreacion,
+    bool? pendingSync,
+  }) => MotivoRow(
+    id: id ?? this.id,
+    idSolicitud: idSolicitud ?? this.idSolicitud,
+    mensaje: mensaje ?? this.mensaje,
+    estado: estado ?? this.estado,
+    fechaCreacion: fechaCreacion ?? this.fechaCreacion,
+    pendingSync: pendingSync ?? this.pendingSync,
+  );
+  MotivoRow copyWithCompanion(MotivosCompanion data) {
+    return MotivoRow(
+      id: data.id.present ? data.id.value : this.id,
+      idSolicitud: data.idSolicitud.present
+          ? data.idSolicitud.value
+          : this.idSolicitud,
+      mensaje: data.mensaje.present ? data.mensaje.value : this.mensaje,
+      estado: data.estado.present ? data.estado.value : this.estado,
+      fechaCreacion: data.fechaCreacion.present
+          ? data.fechaCreacion.value
+          : this.fechaCreacion,
+      pendingSync: data.pendingSync.present
+          ? data.pendingSync.value
+          : this.pendingSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MotivoRow(')
+          ..write('id: $id, ')
+          ..write('idSolicitud: $idSolicitud, ')
+          ..write('mensaje: $mensaje, ')
+          ..write('estado: $estado, ')
+          ..write('fechaCreacion: $fechaCreacion, ')
+          ..write('pendingSync: $pendingSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, idSolicitud, mensaje, estado, fechaCreacion, pendingSync);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MotivoRow &&
+          other.id == this.id &&
+          other.idSolicitud == this.idSolicitud &&
+          other.mensaje == this.mensaje &&
+          other.estado == this.estado &&
+          other.fechaCreacion == this.fechaCreacion &&
+          other.pendingSync == this.pendingSync);
+}
+
+class MotivosCompanion extends UpdateCompanion<MotivoRow> {
+  final Value<String> id;
+  final Value<String> idSolicitud;
+  final Value<String> mensaje;
+  final Value<String> estado;
+  final Value<DateTime> fechaCreacion;
+  final Value<bool> pendingSync;
+  final Value<int> rowid;
+  const MotivosCompanion({
+    this.id = const Value.absent(),
+    this.idSolicitud = const Value.absent(),
+    this.mensaje = const Value.absent(),
+    this.estado = const Value.absent(),
+    this.fechaCreacion = const Value.absent(),
+    this.pendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MotivosCompanion.insert({
+    required String id,
+    required String idSolicitud,
+    required String mensaje,
+    required String estado,
+    required DateTime fechaCreacion,
+    this.pendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       idSolicitud = Value(idSolicitud),
+       mensaje = Value(mensaje),
+       estado = Value(estado),
+       fechaCreacion = Value(fechaCreacion);
+  static Insertable<MotivoRow> custom({
+    Expression<String>? id,
+    Expression<String>? idSolicitud,
+    Expression<String>? mensaje,
+    Expression<String>? estado,
+    Expression<DateTime>? fechaCreacion,
+    Expression<bool>? pendingSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (idSolicitud != null) 'id_solicitud': idSolicitud,
+      if (mensaje != null) 'mensaje': mensaje,
+      if (estado != null) 'estado': estado,
+      if (fechaCreacion != null) 'fecha_creacion': fechaCreacion,
+      if (pendingSync != null) 'pending_sync': pendingSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MotivosCompanion copyWith({
+    Value<String>? id,
+    Value<String>? idSolicitud,
+    Value<String>? mensaje,
+    Value<String>? estado,
+    Value<DateTime>? fechaCreacion,
+    Value<bool>? pendingSync,
+    Value<int>? rowid,
+  }) {
+    return MotivosCompanion(
+      id: id ?? this.id,
+      idSolicitud: idSolicitud ?? this.idSolicitud,
+      mensaje: mensaje ?? this.mensaje,
+      estado: estado ?? this.estado,
+      fechaCreacion: fechaCreacion ?? this.fechaCreacion,
+      pendingSync: pendingSync ?? this.pendingSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (idSolicitud.present) {
+      map['id_solicitud'] = Variable<String>(idSolicitud.value);
+    }
+    if (mensaje.present) {
+      map['mensaje'] = Variable<String>(mensaje.value);
+    }
+    if (estado.present) {
+      map['estado'] = Variable<String>(estado.value);
+    }
+    if (fechaCreacion.present) {
+      map['fecha_creacion'] = Variable<DateTime>(fechaCreacion.value);
+    }
+    if (pendingSync.present) {
+      map['pending_sync'] = Variable<bool>(pendingSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MotivosCompanion(')
+          ..write('id: $id, ')
+          ..write('idSolicitud: $idSolicitud, ')
+          ..write('mensaje: $mensaje, ')
+          ..write('estado: $estado, ')
+          ..write('fechaCreacion: $fechaCreacion, ')
+          ..write('pendingSync: $pendingSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DocumentosTable extends Documentos
+    with TableInfo<$DocumentosTable, DocumentoRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DocumentosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nombreMeta = const VerificationMeta('nombre');
+  @override
+  late final GeneratedColumn<String> nombre = GeneratedColumn<String>(
+    'nombre',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descripcionMeta = const VerificationMeta(
+    'descripcion',
+  );
+  @override
+  late final GeneratedColumn<String> descripcion = GeneratedColumn<String>(
+    'descripcion',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _imagenMeta = const VerificationMeta('imagen');
+  @override
+  late final GeneratedColumn<String> imagen = GeneratedColumn<String>(
+    'imagen',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _habilitadoMeta = const VerificationMeta(
+    'habilitado',
+  );
+  @override
+  late final GeneratedColumn<bool> habilitado = GeneratedColumn<bool>(
+    'habilitado',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("habilitado" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
+    'pendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingSync = GeneratedColumn<bool>(
+    'pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_sync" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    nombre,
+    descripcion,
+    imagen,
+    habilitado,
+    pendingSync,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'documentos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DocumentoRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('nombre')) {
+      context.handle(
+        _nombreMeta,
+        nombre.isAcceptableOrUnknown(data['nombre']!, _nombreMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nombreMeta);
+    }
+    if (data.containsKey('descripcion')) {
+      context.handle(
+        _descripcionMeta,
+        descripcion.isAcceptableOrUnknown(
+          data['descripcion']!,
+          _descripcionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_descripcionMeta);
+    }
+    if (data.containsKey('imagen')) {
+      context.handle(
+        _imagenMeta,
+        imagen.isAcceptableOrUnknown(data['imagen']!, _imagenMeta),
+      );
+    }
+    if (data.containsKey('habilitado')) {
+      context.handle(
+        _habilitadoMeta,
+        habilitado.isAcceptableOrUnknown(data['habilitado']!, _habilitadoMeta),
+      );
+    }
+    if (data.containsKey('pending_sync')) {
+      context.handle(
+        _pendingSyncMeta,
+        pendingSync.isAcceptableOrUnknown(
+          data['pending_sync']!,
+          _pendingSyncMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DocumentoRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DocumentoRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      nombre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nombre'],
+      )!,
+      descripcion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}descripcion'],
+      )!,
+      imagen: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}imagen'],
+      )!,
+      habilitado: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}habilitado'],
+      )!,
+      pendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_sync'],
+      )!,
+    );
+  }
+
+  @override
+  $DocumentosTable createAlias(String alias) {
+    return $DocumentosTable(attachedDatabase, alias);
+  }
+}
+
+class DocumentoRow extends DataClass implements Insertable<DocumentoRow> {
+  final String id;
+  final String nombre;
+  final String descripcion;
+  final String imagen;
+  final bool habilitado;
+  final bool pendingSync;
+  const DocumentoRow({
+    required this.id,
+    required this.nombre,
+    required this.descripcion,
+    required this.imagen,
+    required this.habilitado,
+    required this.pendingSync,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['nombre'] = Variable<String>(nombre);
+    map['descripcion'] = Variable<String>(descripcion);
+    map['imagen'] = Variable<String>(imagen);
+    map['habilitado'] = Variable<bool>(habilitado);
+    map['pending_sync'] = Variable<bool>(pendingSync);
+    return map;
+  }
+
+  DocumentosCompanion toCompanion(bool nullToAbsent) {
+    return DocumentosCompanion(
+      id: Value(id),
+      nombre: Value(nombre),
+      descripcion: Value(descripcion),
+      imagen: Value(imagen),
+      habilitado: Value(habilitado),
+      pendingSync: Value(pendingSync),
+    );
+  }
+
+  factory DocumentoRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DocumentoRow(
+      id: serializer.fromJson<String>(json['id']),
+      nombre: serializer.fromJson<String>(json['nombre']),
+      descripcion: serializer.fromJson<String>(json['descripcion']),
+      imagen: serializer.fromJson<String>(json['imagen']),
+      habilitado: serializer.fromJson<bool>(json['habilitado']),
+      pendingSync: serializer.fromJson<bool>(json['pendingSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'nombre': serializer.toJson<String>(nombre),
+      'descripcion': serializer.toJson<String>(descripcion),
+      'imagen': serializer.toJson<String>(imagen),
+      'habilitado': serializer.toJson<bool>(habilitado),
+      'pendingSync': serializer.toJson<bool>(pendingSync),
+    };
+  }
+
+  DocumentoRow copyWith({
+    String? id,
+    String? nombre,
+    String? descripcion,
+    String? imagen,
+    bool? habilitado,
+    bool? pendingSync,
+  }) => DocumentoRow(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    descripcion: descripcion ?? this.descripcion,
+    imagen: imagen ?? this.imagen,
+    habilitado: habilitado ?? this.habilitado,
+    pendingSync: pendingSync ?? this.pendingSync,
+  );
+  DocumentoRow copyWithCompanion(DocumentosCompanion data) {
+    return DocumentoRow(
+      id: data.id.present ? data.id.value : this.id,
+      nombre: data.nombre.present ? data.nombre.value : this.nombre,
+      descripcion: data.descripcion.present
+          ? data.descripcion.value
+          : this.descripcion,
+      imagen: data.imagen.present ? data.imagen.value : this.imagen,
+      habilitado: data.habilitado.present
+          ? data.habilitado.value
+          : this.habilitado,
+      pendingSync: data.pendingSync.present
+          ? data.pendingSync.value
+          : this.pendingSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentoRow(')
+          ..write('id: $id, ')
+          ..write('nombre: $nombre, ')
+          ..write('descripcion: $descripcion, ')
+          ..write('imagen: $imagen, ')
+          ..write('habilitado: $habilitado, ')
+          ..write('pendingSync: $pendingSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, nombre, descripcion, imagen, habilitado, pendingSync);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DocumentoRow &&
+          other.id == this.id &&
+          other.nombre == this.nombre &&
+          other.descripcion == this.descripcion &&
+          other.imagen == this.imagen &&
+          other.habilitado == this.habilitado &&
+          other.pendingSync == this.pendingSync);
+}
+
+class DocumentosCompanion extends UpdateCompanion<DocumentoRow> {
+  final Value<String> id;
+  final Value<String> nombre;
+  final Value<String> descripcion;
+  final Value<String> imagen;
+  final Value<bool> habilitado;
+  final Value<bool> pendingSync;
+  final Value<int> rowid;
+  const DocumentosCompanion({
+    this.id = const Value.absent(),
+    this.nombre = const Value.absent(),
+    this.descripcion = const Value.absent(),
+    this.imagen = const Value.absent(),
+    this.habilitado = const Value.absent(),
+    this.pendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DocumentosCompanion.insert({
+    required String id,
+    required String nombre,
+    required String descripcion,
+    this.imagen = const Value.absent(),
+    this.habilitado = const Value.absent(),
+    this.pendingSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       nombre = Value(nombre),
+       descripcion = Value(descripcion);
+  static Insertable<DocumentoRow> custom({
+    Expression<String>? id,
+    Expression<String>? nombre,
+    Expression<String>? descripcion,
+    Expression<String>? imagen,
+    Expression<bool>? habilitado,
+    Expression<bool>? pendingSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nombre != null) 'nombre': nombre,
+      if (descripcion != null) 'descripcion': descripcion,
+      if (imagen != null) 'imagen': imagen,
+      if (habilitado != null) 'habilitado': habilitado,
+      if (pendingSync != null) 'pending_sync': pendingSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DocumentosCompanion copyWith({
+    Value<String>? id,
+    Value<String>? nombre,
+    Value<String>? descripcion,
+    Value<String>? imagen,
+    Value<bool>? habilitado,
+    Value<bool>? pendingSync,
+    Value<int>? rowid,
+  }) {
+    return DocumentosCompanion(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      descripcion: descripcion ?? this.descripcion,
+      imagen: imagen ?? this.imagen,
+      habilitado: habilitado ?? this.habilitado,
+      pendingSync: pendingSync ?? this.pendingSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (nombre.present) {
+      map['nombre'] = Variable<String>(nombre.value);
+    }
+    if (descripcion.present) {
+      map['descripcion'] = Variable<String>(descripcion.value);
+    }
+    if (imagen.present) {
+      map['imagen'] = Variable<String>(imagen.value);
+    }
+    if (habilitado.present) {
+      map['habilitado'] = Variable<bool>(habilitado.value);
+    }
+    if (pendingSync.present) {
+      map['pending_sync'] = Variable<bool>(pendingSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentosCompanion(')
+          ..write('id: $id, ')
+          ..write('nombre: $nombre, ')
+          ..write('descripcion: $descripcion, ')
+          ..write('imagen: $imagen, ')
+          ..write('habilitado: $habilitado, ')
           ..write('pendingSync: $pendingSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -426,11 +1330,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $SolicitudesTable solicitudes = $SolicitudesTable(this);
+  late final $MotivosTable motivos = $MotivosTable(this);
+  late final $DocumentosTable documentos = $DocumentosTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [solicitudes];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    solicitudes,
+    motivos,
+    documentos,
+  ];
 }
 
 typedef $$SolicitudesTableCreateCompanionBuilder =
@@ -440,6 +1350,7 @@ typedef $$SolicitudesTableCreateCompanionBuilder =
       required String idUsuario,
       required String periodo,
       required String estado,
+      required DateTime fechaModificacion,
       Value<bool> pendingSync,
       Value<int> rowid,
     });
@@ -450,6 +1361,7 @@ typedef $$SolicitudesTableUpdateCompanionBuilder =
       Value<String> idUsuario,
       Value<String> periodo,
       Value<String> estado,
+      Value<DateTime> fechaModificacion,
       Value<bool> pendingSync,
       Value<int> rowid,
     });
@@ -485,6 +1397,11 @@ class $$SolicitudesTableFilterComposer
 
   ColumnFilters<String> get estado => $composableBuilder(
     column: $table.estado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fechaModificacion => $composableBuilder(
+    column: $table.fechaModificacion,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -528,6 +1445,11 @@ class $$SolicitudesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get fechaModificacion => $composableBuilder(
+    column: $table.fechaModificacion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get pendingSync => $composableBuilder(
     column: $table.pendingSync,
     builder: (column) => ColumnOrderings(column),
@@ -559,6 +1481,11 @@ class $$SolicitudesTableAnnotationComposer
 
   GeneratedColumn<String> get estado =>
       $composableBuilder(column: $table.estado, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fechaModificacion => $composableBuilder(
+    column: $table.fechaModificacion,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get pendingSync => $composableBuilder(
     column: $table.pendingSync,
@@ -602,6 +1529,7 @@ class $$SolicitudesTableTableManager
                 Value<String> idUsuario = const Value.absent(),
                 Value<String> periodo = const Value.absent(),
                 Value<String> estado = const Value.absent(),
+                Value<DateTime> fechaModificacion = const Value.absent(),
                 Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SolicitudesCompanion(
@@ -610,6 +1538,7 @@ class $$SolicitudesTableTableManager
                 idUsuario: idUsuario,
                 periodo: periodo,
                 estado: estado,
+                fechaModificacion: fechaModificacion,
                 pendingSync: pendingSync,
                 rowid: rowid,
               ),
@@ -620,6 +1549,7 @@ class $$SolicitudesTableTableManager
                 required String idUsuario,
                 required String periodo,
                 required String estado,
+                required DateTime fechaModificacion,
                 Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SolicitudesCompanion.insert(
@@ -628,6 +1558,7 @@ class $$SolicitudesTableTableManager
                 idUsuario: idUsuario,
                 periodo: periodo,
                 estado: estado,
+                fechaModificacion: fechaModificacion,
                 pendingSync: pendingSync,
                 rowid: rowid,
               ),
@@ -665,10 +1596,472 @@ typedef $$SolicitudesTableProcessedTableManager =
       SolicitudRow,
       PrefetchHooks Function()
     >;
+typedef $$MotivosTableCreateCompanionBuilder = MotivosCompanion Function({
+  required String id,
+  required String idSolicitud,
+  required String mensaje,
+  required String estado,
+  required DateTime fechaCreacion,
+  Value<bool> pendingSync,
+  Value<int> rowid,
+});
+typedef $$MotivosTableUpdateCompanionBuilder = MotivosCompanion Function({
+  Value<String> id,
+  Value<String> idSolicitud,
+  Value<String> mensaje,
+  Value<String> estado,
+  Value<DateTime> fechaCreacion,
+  Value<bool> pendingSync,
+  Value<int> rowid,
+});
+
+class $$MotivosTableFilterComposer
+    extends Composer<_$AppDatabase, $MotivosTable> {
+  $$MotivosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idSolicitud => $composableBuilder(
+    column: $table.idSolicitud,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mensaje => $composableBuilder(
+    column: $table.mensaje,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get estado => $composableBuilder(
+    column: $table.estado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fechaCreacion => $composableBuilder(
+    column: $table.fechaCreacion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MotivosTableOrderingComposer
+    extends Composer<_$AppDatabase, $MotivosTable> {
+  $$MotivosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get idSolicitud => $composableBuilder(
+    column: $table.idSolicitud,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mensaje => $composableBuilder(
+    column: $table.mensaje,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get estado => $composableBuilder(
+    column: $table.estado,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fechaCreacion => $composableBuilder(
+    column: $table.fechaCreacion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MotivosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MotivosTable> {
+  $$MotivosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get idSolicitud => $composableBuilder(
+    column: $table.idSolicitud,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mensaje =>
+      $composableBuilder(column: $table.mensaje, builder: (column) => column);
+
+  GeneratedColumn<String> get estado =>
+      $composableBuilder(column: $table.estado, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fechaCreacion => $composableBuilder(
+    column: $table.fechaCreacion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => column,
+  );
+}
+
+class $$MotivosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MotivosTable,
+          MotivoRow,
+          $$MotivosTableFilterComposer,
+          $$MotivosTableOrderingComposer,
+          $$MotivosTableAnnotationComposer,
+          $$MotivosTableCreateCompanionBuilder,
+          $$MotivosTableUpdateCompanionBuilder,
+          (MotivoRow, BaseReferences<_$AppDatabase, $MotivosTable, MotivoRow>),
+          MotivoRow,
+          PrefetchHooks Function()
+        > {
+  $$MotivosTableTableManager(_$AppDatabase db, $MotivosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MotivosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MotivosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MotivosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> idSolicitud = const Value.absent(),
+                Value<String> mensaje = const Value.absent(),
+                Value<String> estado = const Value.absent(),
+                Value<DateTime> fechaCreacion = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MotivosCompanion(
+                id: id,
+                idSolicitud: idSolicitud,
+                mensaje: mensaje,
+                estado: estado,
+                fechaCreacion: fechaCreacion,
+                pendingSync: pendingSync,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String idSolicitud,
+                required String mensaje,
+                required String estado,
+                required DateTime fechaCreacion,
+                Value<bool> pendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MotivosCompanion.insert(
+                id: id,
+                idSolicitud: idSolicitud,
+                mensaje: mensaje,
+                estado: estado,
+                fechaCreacion: fechaCreacion,
+                pendingSync: pendingSync,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$MotivosTable, MotivoRow>(table),
+                  BaseReferences<_$AppDatabase, $MotivosTable, MotivoRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MotivosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MotivosTable,
+      MotivoRow,
+      $$MotivosTableFilterComposer,
+      $$MotivosTableOrderingComposer,
+      $$MotivosTableAnnotationComposer,
+      $$MotivosTableCreateCompanionBuilder,
+      $$MotivosTableUpdateCompanionBuilder,
+      (MotivoRow, BaseReferences<_$AppDatabase, $MotivosTable, MotivoRow>),
+      MotivoRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DocumentosTableCreateCompanionBuilder = DocumentosCompanion Function({
+  required String id,
+  required String nombre,
+  required String descripcion,
+  Value<String> imagen,
+  Value<bool> habilitado,
+  Value<bool> pendingSync,
+  Value<int> rowid,
+});
+typedef $$DocumentosTableUpdateCompanionBuilder = DocumentosCompanion Function({
+  Value<String> id,
+  Value<String> nombre,
+  Value<String> descripcion,
+  Value<String> imagen,
+  Value<bool> habilitado,
+  Value<bool> pendingSync,
+  Value<int> rowid,
+});
+
+class $$DocumentosTableFilterComposer
+    extends Composer<_$AppDatabase, $DocumentosTable> {
+  $$DocumentosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nombre => $composableBuilder(
+    column: $table.nombre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get descripcion => $composableBuilder(
+    column: $table.descripcion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagen => $composableBuilder(
+    column: $table.imagen,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get habilitado => $composableBuilder(
+    column: $table.habilitado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DocumentosTableOrderingComposer
+    extends Composer<_$AppDatabase, $DocumentosTable> {
+  $$DocumentosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nombre => $composableBuilder(
+    column: $table.nombre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get descripcion => $composableBuilder(
+    column: $table.descripcion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imagen => $composableBuilder(
+    column: $table.imagen,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get habilitado => $composableBuilder(
+    column: $table.habilitado,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DocumentosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DocumentosTable> {
+  $$DocumentosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get nombre =>
+      $composableBuilder(column: $table.nombre, builder: (column) => column);
+
+  GeneratedColumn<String> get descripcion => $composableBuilder(
+    column: $table.descripcion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get imagen =>
+      $composableBuilder(column: $table.imagen, builder: (column) => column);
+
+  GeneratedColumn<bool> get habilitado => $composableBuilder(
+    column: $table.habilitado,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => column,
+  );
+}
+
+class $$DocumentosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DocumentosTable,
+          DocumentoRow,
+          $$DocumentosTableFilterComposer,
+          $$DocumentosTableOrderingComposer,
+          $$DocumentosTableAnnotationComposer,
+          $$DocumentosTableCreateCompanionBuilder,
+          $$DocumentosTableUpdateCompanionBuilder,
+          (
+            DocumentoRow,
+            BaseReferences<_$AppDatabase, $DocumentosTable, DocumentoRow>,
+          ),
+          DocumentoRow,
+          PrefetchHooks Function()
+        > {
+  $$DocumentosTableTableManager(_$AppDatabase db, $DocumentosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DocumentosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DocumentosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DocumentosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> nombre = const Value.absent(),
+                Value<String> descripcion = const Value.absent(),
+                Value<String> imagen = const Value.absent(),
+                Value<bool> habilitado = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DocumentosCompanion(
+                id: id,
+                nombre: nombre,
+                descripcion: descripcion,
+                imagen: imagen,
+                habilitado: habilitado,
+                pendingSync: pendingSync,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String nombre,
+                required String descripcion,
+                Value<String> imagen = const Value.absent(),
+                Value<bool> habilitado = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DocumentosCompanion.insert(
+                id: id,
+                nombre: nombre,
+                descripcion: descripcion,
+                imagen: imagen,
+                habilitado: habilitado,
+                pendingSync: pendingSync,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$DocumentosTable, DocumentoRow>(table),
+                  BaseReferences<_$AppDatabase, $DocumentosTable, DocumentoRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DocumentosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DocumentosTable,
+      DocumentoRow,
+      $$DocumentosTableFilterComposer,
+      $$DocumentosTableOrderingComposer,
+      $$DocumentosTableAnnotationComposer,
+      $$DocumentosTableCreateCompanionBuilder,
+      $$DocumentosTableUpdateCompanionBuilder,
+      (
+        DocumentoRow,
+        BaseReferences<_$AppDatabase, $DocumentosTable, DocumentoRow>,
+      ),
+      DocumentoRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$SolicitudesTableTableManager get solicitudes =>
       $$SolicitudesTableTableManager(_db, _db.solicitudes);
+  $$MotivosTableTableManager get motivos =>
+      $$MotivosTableTableManager(_db, _db.motivos);
+  $$DocumentosTableTableManager get documentos =>
+      $$DocumentosTableTableManager(_db, _db.documentos);
 }

@@ -5,6 +5,7 @@ import 'package:solicitud_documentos/models/estados.dart';
 import 'package:solicitud_documentos/models/motivo.dart';
 import 'package:solicitud_documentos/models/solicitud.dart';
 import 'package:solicitud_documentos/models/usuario.dart';
+import 'package:solicitud_documentos/repository/motivo_repository.dart';
 import 'package:solicitud_documentos/repository/solicitud_repository.dart';
 import 'package:solicitud_documentos/validators/solicitud_validators.dart';
 
@@ -33,7 +34,7 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
   late Future<List<Motivo>> _motivos = _cargarMotivos();
 
   Future<List<Motivo>> _cargarMotivos() async {
-    final lista = await widget.motivoRepository.listarPorSolicitud(
+    final lista = await widget.motivoRepository.obtenerPorSolicitud(
       _solicitud.id,
     );
     return lista..sort((a, b) => a.fechaCreacion.compareTo(b.fechaCreacion));
@@ -69,7 +70,7 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
         nuevo,
         widget.usuario,
       );
-      await widget.motivoRepository.guardar(
+      await widget.motivoRepository.crear(
         Motivo(
           id: '', // Firestore generates it
           idSolicitud: _solicitud.id,
@@ -86,6 +87,7 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
           idUsuario: _solicitud.idUsuario,
           periodo: _solicitud.periodo,
           estado: nuevo,
+          fechaModificacion: DateTime.now(),
         );
         _motivos = _cargarMotivos();
       });

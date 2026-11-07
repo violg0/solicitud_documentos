@@ -5,10 +5,10 @@ import '../models/documento.dart';
 import '../models/estados.dart';
 import '../models/solicitud.dart';
 import '../models/usuario.dart';
-import '../repositories/documento_repository.dart'; // ajusta rutas
-import '../repositories/motivo_repository.dart';
-import '../repositories/solicitud_repository.dart';
-import '../widgets/solicitud_detalle_card.dart';
+import '../repository/documento_repository.dart'; // ajusta rutas
+import '../repository/motivo_repository.dart';
+import '../repository/solicitud_repository.dart';
+import 'solicitud/solicitud_detalle_card.dart';
 
 class BandejaSolicitudesScreen extends StatefulWidget {
   const BandejaSolicitudesScreen({
@@ -44,7 +44,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
   Future<(List<Solicitud>, Map<String, Documento>)> _cargar() async {
     final r = await Future.wait([
       widget.solicitudRepository.obtenerSolicitudes(),
-      widget.documentoRepository.listar(),
+      widget.documentoRepository.obtenerTodos(),
     ]);
     final docs = {for (final d in r[1] as List<Documento>) d.id: d};
     return (r[0] as List<Solicitud>, docs);

@@ -13,6 +13,7 @@ class SolicitudLocalDataSource {
     idUsuario: row.idUsuario,
     periodo: row.periodo,
     estado: EstadoSolicitud.values.byName(row.estado),
+    fechaModificacion: row.fechaModificacion,
   );
 
   Future<List<Solicitud>> getSolicitudes() async {
@@ -28,6 +29,7 @@ class SolicitudLocalDataSource {
         idUsuario: s.idUsuario,
         periodo: s.periodo,
         estado: s.estado.name,
+        fechaModificacion: s.fechaModificacion,
         pendingSync: const Value(true),
       ),
     );

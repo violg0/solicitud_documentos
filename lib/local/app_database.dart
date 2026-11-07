@@ -5,9 +5,11 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'solicitudes_table.dart';
+import 'motivos_table.dart';
+import 'documentos_table.dart';
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Solicitudes])
+@DriftDatabase(tables: [Solicitudes, Motivos, Documentos])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);

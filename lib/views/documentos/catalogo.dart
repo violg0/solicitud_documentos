@@ -8,8 +8,10 @@ import '../../models/usuario.dart';
 import '../../service/api/documento_service.dart';
 import '../../service/firebase/auth_service.dart';
 import '../../service/firebase/crash_service.dart';
+import '../../repository/documento_repository.dart';
+import '../../repository/motivo_repository.dart';
+import '../../repository/solicitud_repository.dart';
 
-import 'package:flutter/foundation.dart';
 
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({
@@ -17,11 +19,17 @@ class CatalogoScreen extends StatefulWidget {
     required this.usuario,
     required this.authService,
     required this.crashService,
+    required this.solicitudRepository,
+    required this.documentoRepository,
+    required this.motivoRepository,
   });
 
   final Usuario usuario;
   final AuthService authService;
   final CrashService crashService;
+  final SolicitudRepository solicitudRepository;
+  final DocumentoRepository documentoRepository;
+  final MotivoRepository motivoRepository;
 
   @override
   State<CatalogoScreen> createState() => _CatalogoScreenState();
