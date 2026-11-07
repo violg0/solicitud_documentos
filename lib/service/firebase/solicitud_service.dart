@@ -71,7 +71,10 @@ class SolicitudService {
     await _crashService.registrar(
       () => _coleccion
           .doc(solicitud.id)
-          .update({'estado': nuevo.name})
+          .update({
+            'estado': nuevo.name,
+            'fechaModificacion': DateTime.now().toIso8601String(),
+          })
           .timeout(_tiempoMaximo),
       'SolicitudService.cambiarEstado',
     );

@@ -1,5 +1,8 @@
+// lib/pages/login_page.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:solicitud_documentos/service/firebase/auth_service.dart';
+import 'package:solicitud_documentos/views/login/register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.authService});
@@ -13,8 +16,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _cargando = false;
   String? _error;
+  bool _cargando = false;
 
   @override
   void dispose() {
@@ -23,21 +26,23 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _ingresar() async {
     setState(() {
       _cargando = true;
       _error = null;
     });
     try {
       await widget.authService.login(
-        email: _email.text.trim(),
+        email: _email.text,
         password: _password.text,
       );
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _cargando = false);
+      // AuthGate cambia de pantalla solo
+    } on FirebaseAuthException {
+      _error = 'Las credenciales no coinciden';
+    } catch (_) {
+      _error = 'No fue posible ingresar';
     }
+    if (mounted) setState(() => _cargando = false);
   }
 
   @override
@@ -45,28 +50,33 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Iniciar sesión')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             TextField(
               controller: _email,
-              decoration: const InputDecoration(labelText: 'Correo'),
               keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'Correo'),
             ),
             TextField(
               controller: _password,
-              decoration: const InputDecoration(labelText: 'Contraseña'),
               obscureText: true,
+              decoration: const InputDecoration(labelText: 'Contraseña'),
             ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(_error!, style: const TextStyle(color: Colors.red)),
-              ),
+            if (_error != null) Text(_error!),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _cargando ? null : _login,
-              child: const Text('Entrar'),
+              onPressed: _cargando ? null : _ingresar,
+              child: Text(_cargando ? 'Ingresando...' : 'Ingresar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RegisterPage(authService: widget.authService),
+                ),
+              ),
+              child: const Text('Crear una cuenta'),
             ),
           ],
         ),

@@ -6,6 +6,7 @@ class Solicitud {
   final String idUsuario;
   final String periodo;
   final EstadoSolicitud estado;
+  final DateTime fechaModificacion;
 
   Solicitud({
     required this.id,
@@ -13,6 +14,7 @@ class Solicitud {
     required this.idUsuario,
     required this.periodo,
     required this.estado,
+    required this.fechaModificacion,
   });
 
   factory Solicitud.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class Solicitud {
       idUsuario: json['idUsuario'],
       periodo: json['periodo'],
       estado: EstadoSolicitud.values.byName(json['estado']),
+      fechaModificacion: DateTime(json['fecha-modificacion']),
     );
   }
 
@@ -32,6 +35,7 @@ class Solicitud {
       'idUsuario': idUsuario,
       'periodo': periodo,
       'estado': estado.name,
+      'fecha-modificacion': fechaModificacion,
     };
   }
 }

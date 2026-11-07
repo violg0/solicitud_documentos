@@ -8,7 +8,7 @@ import 'package:solicitud_documentos/service/firebase/usuario_service.dart';
 import 'package:solicitud_documentos/views/catalogo.dart';
 import 'package:solicitud_documentos/views/login.dart';
 
-import '../models/usuario.dart';
+import '../../models/usuario.dart';
 
 // import de CatalogoScreen
 

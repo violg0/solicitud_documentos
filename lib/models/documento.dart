@@ -2,12 +2,14 @@ class Documento {
   final String id;
   final String nombre;
   final String descripcion;
+  final String imagen;
   final bool habilitado;
 
   Documento({
     required this.id,
     required this.nombre,
     required this.descripcion,
+    required this.imagen,
     required this.habilitado,
   });
 
@@ -16,6 +18,7 @@ class Documento {
       id: json['id'],
       nombre: json['nombre'],
       descripcion: json['descripcion'],
+      imagen: json['imagen'],
       habilitado: json['habilitado'],
     );
   }
@@ -25,6 +28,7 @@ class Documento {
       'id': id,
       'nombre': nombre,
       'descripcion': descripcion,
+      'imagen': imagen,
       'habilitado': habilitado,
     };
   }

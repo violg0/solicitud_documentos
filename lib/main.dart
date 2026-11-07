@@ -1,11 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:solicitud_documentos/views/login/auth_gate.dart';
 
 import 'firebase_options.dart';
 import 'service/firebase/auth_service.dart';
 import 'service/firebase/crash_service.dart';
 import 'service/firebase/usuario_service.dart';
-import 'views/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +24,13 @@ Future<void> main() async {
   final usuarioService = UsuarioService(crashService: crashService);
   final authService = FirebaseAuthService(usuarioService);
 
-  runApp(MyApp(
-    authService: authService,
-    usuarioService: usuarioService,
-    crashService: crashService,
-  ));
+  runApp(
+    MyApp(
+      authService: authService,
+      usuarioService: usuarioService,
+      crashService: crashService,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
