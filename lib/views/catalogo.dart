@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:solicitud_documentos/service/firebase/crash_service.dart';
+
 import 'dart:async';
 
-import '../components/documento_card.dart';
+import 'package:flutter/foundation.dart';
+
 import '../models/documento.dart';
-import '../service/api/documento_service.dart';
 import 'detalle_solicitud.dart';
 import '../validators/solicitud_validators.dart';
 import '../service/firebase/auth_service.dart';
+import '../service/firebase/documento_service.dart';
 
 class CatalogoScreen extends StatefulWidget {
-  const CatalogoScreen({super.key});
+  const CatalogoScreen({super.key, required this.crashService});
+
+  final CrashService crashService;
 
   @override
   State<CatalogoScreen> createState() => _CatalogoScreenState();
@@ -22,22 +27,49 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   // estado reintentar
   void retryDocumentos() {
-  setState(() {
-    _futureDocumentos = _documentoService.getDocumentos();
-  });
-}
+    setState(() {
+      _futureDocumentos = _documentoService.listar();
+    });
+  }
 
-//estado inicial
+  //estado inicial
   @override
   void initState() {
     super.initState();
-    _documentoService= DocumentoService('https://6aee1a6ca677fe0fc14fc05f.mockapi.io/documentos');
-    _futureDocumentos = _documentoService.getDocumentos();  }
+    _documentoService = DocumentoService(crashService: widget.crashService);
+    _futureDocumentos = _documentoService.listar();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Catálogo de documentos')),
+      appBar: AppBar(
+        title: const Text('Catálogo de documentos'),
+        actions: [
+          if (kDebugMode)
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'nonFatal') {
+                  try {
+                    throw StateError('QA non-fatal test');
+                  } catch (e, s) {
+                    await widget.crashService.recordNonFatal(
+                      e,
+                      s,
+                      reason: 'QA test',
+                    );
+                  }
+                } else {
+                  widget.crashService.simulateFatalCrash();
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'nonFatal', child: Text('Log non-fatal')),
+                PopupMenuItem(value: 'fatal', child: Text('Force fatal crash')),
+              ],
+            ),
+        ],
+      ),
       body: FutureBuilder<List<Documento>>(
         future: _futureDocumentos,
         builder: (context, snapshot) {
@@ -79,7 +111,6 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 subtitle: Text(doc.descripcion),
                 enabled: doc.habilitado,
                 trailing: doc.habilitado ? null : const Text('No disponible'),
-            
               );
             },
           );
