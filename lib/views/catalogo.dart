@@ -3,9 +3,10 @@ import 'dart:async';
 
 import '../components/documento_card.dart';
 import '../models/documento.dart';
-import '../services/documento_service.dart';
+import '../service/api/documento_service.dart';
 import 'detalle_solicitud.dart';
 import '../validators/solicitud_validators.dart';
+import '../service/firebase/auth_service.dart';
 
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({super.key});
