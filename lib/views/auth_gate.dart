@@ -6,6 +6,7 @@ import 'package:solicitud_documentos/service/firebase/auth_service.dart';
 import 'package:solicitud_documentos/service/firebase/crash_service.dart';
 import 'package:solicitud_documentos/service/firebase/usuario_service.dart';
 import 'package:solicitud_documentos/views/catalogo.dart';
+import 'package:solicitud_documentos/views/login.dart';
 
 import '../models/usuario.dart';
 
@@ -40,8 +41,9 @@ class AuthGate extends StatelessWidget {
           stream: usuarioService.observar(user.uid),
           builder: (context, perfilSnap) {
             final usuario = perfilSnap.data;
-            if (usuario == null)
+            if (usuario == null) {
               return const _Cargando(); // perfil aún no guardado
+            }
             return CatalogoScreen(
               usuario: usuario,
               authService: authService,

@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:solicitud_documentos/service/firebase/crash_service.dart';
-
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
+import '../components/documento_card.dart';
 import '../models/documento.dart';
+import '../models/usuario.dart';
+import '../service/api/documento_service.dart';
 import 'detalle_solicitud.dart';
 import '../validators/solicitud_validators.dart';
 import '../service/firebase/auth_service.dart';
-import '../service/firebase/documento_service.dart';
+import '../service/firebase/crash_service.dart';
+import 'package:flutter/foundation.dart';
 
 class CatalogoScreen extends StatefulWidget {
-  const CatalogoScreen({super.key, required this.crashService});
+  const CatalogoScreen({
+    super.key,
+    required this.usuario,
+    required this.authService,
+    required this.crashService,
+  });
 
+  final Usuario usuario;
+  final AuthService authService;
   final CrashService crashService;
 
   @override
@@ -27,18 +34,17 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   // estado reintentar
   void retryDocumentos() {
-    setState(() {
-      _futureDocumentos = _documentoService.listar();
-    });
-  }
+  setState(() {
+    _futureDocumentos = _documentoService.getDocumentos();
+  });
+}
 
-  //estado inicial
+//estado inicial
   @override
   void initState() {
     super.initState();
-    _documentoService = DocumentoService(crashService: widget.crashService);
-    _futureDocumentos = _documentoService.listar();
-  }
+    _documentoService= DocumentoService('https://6aee1a6ca677fe0fc14fc05f.mockapi.io/documentos');
+    _futureDocumentos = _documentoService.getDocumentos();  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,11 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       appBar: AppBar(
         title: const Text('Catálogo de documentos'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () => widget.authService.logout(),
+          ),
           if (kDebugMode)
             PopupMenuButton<String>(
               onSelected: (value) async {
