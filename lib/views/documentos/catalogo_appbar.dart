@@ -54,7 +54,7 @@ class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: const Text('Catálogo'),
       actions: [
-        if (usuario.rol == Rol.secretaria)
+        if (usuario.rol == Rol.secretaria || usuario.rol == Rol.revisor)
           IconButton(
             tooltip: 'Bandeja',
             icon: const Icon(Icons.inbox),

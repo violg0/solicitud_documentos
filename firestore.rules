@@ -1,0 +1,127 @@
+rules_version = '2';
+
+// Reglas de negocio impuestas del lado del servidor.
+// Campos reales del proyecto (ver lib/models):
+//   Usuarios/{uid}      -> nombre, email, rol  (el uid es el id del documento)
+//   Solicitudes/{id}    -> idDocumento, idUsuario, periodo, estado, fechaModificacion
+//   Motivos/{id}        -> idSolicitud, mensaje, estado, fechaCreacion
+//   rol: 'estudiante' | 'revisor' | 'secretaria'
+//
+// Los roles revisor y secretaria se asignan SOLO a mano desde la consola de
+// Firebase: ninguna regla permite que la app los escriba.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function perfil() {
+      return get(/databases/$(database)/documents/Usuarios/$(request.auth.uid)).data;
+    }
+
+    // Un usuario sin documento en Usuarios no tiene rol: ninguna de estas
+    // funciones le concede nada.
+    function tienePerfil() {
+      return exists(/databases/$(database)/documents/Usuarios/$(request.auth.uid));
+    }
+
+    function esEstudiante() {
+      return autenticado() && tienePerfil() && perfil().rol == 'estudiante';
+    }
+
+    function esPrivilegiado() {
+      return autenticado() && tienePerfil()
+        && (perfil().rol == 'revisor' || perfil().rol == 'secretaria');
+    }
+
+    // ---------- Usuarios ----------
+    match /Usuarios/{userId} {
+      // Solo el propio perfil.
+      allow read: if autenticado() && request.auth.uid == userId;
+
+      // Autorregistro: el id del documento es el uid propio y el rol enviado
+      // es SIEMPRE 'estudiante'. Sin esto cualquiera podría llamar a la API
+      // de Firestore y asignarse revisor/secretaria.
+      allow create: if autenticado()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['nombre', 'email', 'rol'])
+        && request.resource.data.rol == 'estudiante';
+
+      // Sin update/delete desde el cliente: el rol no se puede escalar después.
+      allow update, delete: if false;
+    }
+
+    // ---------- Documentos (catálogo) ----------
+    match /Documentos/{docId} {
+      allow read: if autenticado();
+      allow write: if false; // se gestionan desde la consola
+    }
+
+    // ---------- Solicitudes ----------
+    match /Solicitudes/{solicitudId} {
+      // El dueño lee las suyas; revisor y secretaria leen todas.
+      allow read: if autenticado()
+        && (resource.data.idUsuario == request.auth.uid || esPrivilegiado());
+
+      // Un estudiante crea solo a su nombre y siempre en estado inicial,
+      // para que no pueda "nacer" ya aprobada.
+      allow create: if esEstudiante()
+        && request.resource.data.idUsuario == request.auth.uid
+        && request.resource.data.estado == 'solicitada'
+        && request.resource.data.keys().hasOnly(
+             ['idDocumento', 'idUsuario', 'periodo', 'estado', 'fechaModificacion']);
+
+      allow update: if
+        // Revisor/secretaria: solo pueden tocar estado y fechaModificacion.
+        (esPrivilegiado()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['estado', 'fechaModificacion']))
+        // El dueño solo puede reenviar la solicitud idéntica (la app reintenta
+        // el guardado offline con set()). Cualquier otro cambio se rechaza.
+        || (esEstudiante()
+          && resource.data.idUsuario == request.auth.uid
+          && request.resource.data == resource.data)
+        // Única excepción de estado para el estudiante: cancelar la suya
+        // mientras está 'solicitada'. Solo cambian estado y fechaModificacion
+        // (la app actualiza ambos al cambiar de estado); ningún otro campo.
+        || (esEstudiante()
+          && resource.data.idUsuario == request.auth.uid
+          && resource.data.estado == 'solicitada'
+          && request.resource.data.estado == 'cancelada'
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['estado', 'fechaModificacion']));
+
+      allow delete: if false;
+    }
+
+    // ---------- Motivos ----------
+    match /Motivos/{motivoId} {
+      // Dueño de la solicitud, revisor o secretaria.
+      allow read: if autenticado()
+        && (esPrivilegiado()
+          || get(/databases/$(database)/documents/Solicitudes/$(resource.data.idSolicitud))
+               .data.idUsuario == request.auth.uid);
+
+      allow create: if request.resource.data.keys().hasOnly(
+             ['idSolicitud', 'mensaje', 'estado', 'fechaCreacion'])
+        && (
+          // Revisor o secretaria: en cualquier caso.
+          esPrivilegiado()
+          // Estudiante: solo el motivo de la cancelación de SU solicitud.
+          // getAfter() mira la solicitud tal como queda tras la escritura:
+          // sirve tanto si la app cancela primero y crea el motivo después
+          // (dos escrituras) como si lo hace en un mismo batch.
+          || (esEstudiante()
+            && request.resource.data.estado == 'cancelada'
+            && getAfter(/databases/$(database)/documents/Solicitudes/$(request.resource.data.idSolicitud))
+                 .data.idUsuario == request.auth.uid
+            && getAfter(/databases/$(database)/documents/Solicitudes/$(request.resource.data.idSolicitud))
+                 .data.estado == 'cancelada')
+        );
+
+      allow update, delete: if false;
+    }
+  }
+}

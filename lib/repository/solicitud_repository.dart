@@ -30,9 +30,7 @@ class SolicitudRepository {
     required String? idUsuario,
   }) async {
     try {
-      final solicitudes = (await remote.listar())
-          .where((s) => idUsuario == null || s.idUsuario == idUsuario)
-          .toList();
+      final solicitudes = await remote.listar(idUsuario: idUsuario);
       for (final s in solicitudes) {
         await local.saveSolicitud(s);
         await local.markSynced(s.id);

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:solicitud_documentos/models/rol.dart';
 import 'package:solicitud_documentos/service/firebase/auth_service.dart';
+import 'package:solicitud_documentos/views/login/auth_errors.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key, required this.authService});
@@ -17,7 +18,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nombre = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  Rol _rol = Rol.estudiante;
   String? _error;
   bool _cargando = false;
 
@@ -45,15 +45,15 @@ class _RegisterPageState extends State<RegisterPage> {
         nombre: _nombre.text,
         email: _email.text,
         password: _password.text,
-        rol: _rol,
+        // Quien se autorregistra siempre es estudiante; revisor y secretaria
+        // solo se asignan manualmente desde la consola de Firebase.
+        rol: Rol.estudiante,
       );
       if (mounted) Navigator.pop(context); // AuthGate ya muestra el catálogo
     } on FirebaseAuthException catch (e) {
-      _error = e.code == 'email-already-in-use'
-          ? 'Ya existe una cuenta con este correo'
-          : 'Revisa los datos ingresados';
+      _error = mensajeErrorAuth(e);
     } catch (_) {
-      _error = 'No fue posible registrarte';
+      _error = mensajeErrorGenerico;
     }
     if (mounted) setState(() => _cargando = false);
   }
@@ -79,15 +79,6 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _password,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Contraseña'),
-            ),
-            DropdownButtonFormField<Rol>(
-              initialValue: _rol,
-              decoration: const InputDecoration(labelText: 'Rol'),
-              items: [
-                for (final r in Rol.values)
-                  DropdownMenuItem(value: r, child: Text(r.name)),
-              ],
-              onChanged: (r) => setState(() => _rol = r!),
             ),
             if (_error != null) Text(_error!),
             const SizedBox(height: 16),

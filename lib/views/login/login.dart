@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:solicitud_documentos/service/firebase/auth_service.dart';
+import 'package:solicitud_documentos/views/login/auth_errors.dart';
 import 'package:solicitud_documentos/views/login/register.dart';
 
 class LoginPage extends StatefulWidget {
@@ -37,10 +38,10 @@ class _LoginPageState extends State<LoginPage> {
         password: _password.text,
       );
       // AuthGate cambia de pantalla solo
-    } on FirebaseAuthException {
-      _error = 'Las credenciales no coinciden';
+    } on FirebaseAuthException catch (e) {
+      _error = mensajeErrorAuth(e);
     } catch (_) {
-      _error = 'No fue posible ingresar';
+      _error = mensajeErrorGenerico;
     }
     if (mounted) setState(() => _cargando = false);
   }

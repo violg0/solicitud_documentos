@@ -18,12 +18,19 @@ class SolicitudService {
   CollectionReference<Map<String, dynamic>> get _coleccion =>
       FirebaseFirestore.instance.collection('Solicitudes');
 
-  Future<List<Solicitud>> listar() => _crashService.registrar(() async {
-    final snapshot = await _coleccion.get();
-    return snapshot.docs
-        .map((d) => Solicitud.fromJson({...d.data(), 'id': d.id}))
-        .toList();
-  }, 'SolicitudService.listar');
+  /// Si [idUsuario] no es null, la consulta se filtra en el servidor: las
+  /// reglas de Firestore solo dejan a un estudiante leer sus propias
+  /// solicitudes, así que pedir toda la colección sería rechazado.
+  Future<List<Solicitud>> listar({String? idUsuario}) =>
+      _crashService.registrar(() async {
+        final Query<Map<String, dynamic>> consulta = idUsuario == null
+            ? _coleccion
+            : _coleccion.where('idUsuario', isEqualTo: idUsuario);
+        final snapshot = await consulta.get();
+        return snapshot.docs
+            .map((d) => Solicitud.fromJson({...d.data(), 'id': d.id}))
+            .toList();
+      }, 'SolicitudService.listar');
 
   Future<Solicitud?> obtenerPorId(String id) => _crashService.registrar(
     () async {
