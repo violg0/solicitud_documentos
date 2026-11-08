@@ -7,6 +7,7 @@ import 'package:solicitud_documentos/repository/documento_repository.dart';
 import 'package:solicitud_documentos/repository/motivo_repository.dart';
 import 'package:solicitud_documentos/repository/solicitud_repository.dart';
 import 'package:solicitud_documentos/views/bandeja.dart';
+import 'package:solicitud_documentos/views/solicitud/solicitudes.dart';
 import 'package:solicitud_documentos/service/firebase/auth_service.dart';
 import 'package:solicitud_documentos/service/firebase/crash_service.dart';
 
@@ -62,6 +63,24 @@ class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
               MaterialPageRoute(
                 builder: (_) => BandejaSolicitudesScreen(
                   usuario: usuario,
+                  solicitudRepository: solicitudRepository,
+                  documentoRepository: documentoRepository,
+                  motivoRepository: motivoRepository,
+                ),
+              ),
+            ),
+          ),
+        if (usuario.rol == Rol.estudiante)
+          IconButton(
+            tooltip: 'Mis solicitudes',
+            icon: const Icon(Icons.list_alt),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SolicitudesScreen(
+                  usuario: usuario,
+                  authService: authService,
+                  crashService: crashService,
                   solicitudRepository: solicitudRepository,
                   documentoRepository: documentoRepository,
                   motivoRepository: motivoRepository,
