@@ -14,7 +14,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -28,6 +28,25 @@ class AppDatabase extends _$AppDatabase {
             variables: [Variable.withString(tabla.actualTableName)],
           ).get();
           if (existe.isEmpty) await m.createTable(tabla);
+        }
+        if (from < 4) {
+          await _agregarColumna(
+            'solicitudes',
+            'observacion_estudiante',
+            "TEXT NOT NULL DEFAULT ''",
+          );
+          await _agregarColumna(
+            'solicitudes',
+            'fecha_creacion',
+            'INTEGER NOT NULL DEFAULT 0',
+          );
+          await _agregarColumna(
+            'solicitudes',
+            'observacion_revision',
+            'TEXT',
+          );
+          await _agregarColumna('solicitudes', 'fecha_entrega', 'INTEGER');
+          await _agregarColumna('solicitudes', 'entregado_por', 'TEXT');
         }
         // Agrega las columnas que falten, conservando los datos.
         await _agregarColumna('solicitudes', 'fecha_modificacion',

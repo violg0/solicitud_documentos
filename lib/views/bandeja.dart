@@ -3,23 +3,27 @@ import 'package:flutter/material.dart';
 
 import '../models/documento.dart';
 import '../models/estados.dart';
+import '../models/rol.dart';
 import '../models/solicitud.dart';
 import '../models/usuario.dart';
 import '../repository/documento_repository.dart'; // ajusta rutas
 import '../repository/motivo_repository.dart';
 import '../repository/solicitud_repository.dart';
+import '../service/firebase/auth_service.dart';
 import 'solicitud/solicitud_detalle_card.dart';
 
 class BandejaSolicitudesScreen extends StatefulWidget {
   const BandejaSolicitudesScreen({
     super.key,
     required this.usuario,
+    required this.authService,
     required this.solicitudRepository,
     required this.documentoRepository,
     required this.motivoRepository,
   });
 
   final Usuario usuario;
+  final AuthService authService;
   final SolicitudRepository solicitudRepository;
   final DocumentoRepository documentoRepository;
   final MotivoRepository motivoRepository;
@@ -73,7 +77,20 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bandeja de solicitudes')),
+      appBar: AppBar(
+        title: Text(
+          widget.usuario.rol == Rol.revisor
+              ? 'Bandeja del revisor'
+              : 'Bandeja de secretaría',
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Cerrar sesión',
+            icon: const Icon(Icons.logout),
+            onPressed: widget.authService.logout,
+          ),
+        ],
+      ),
       body: FutureBuilder(
         future: _datos,
         builder: (context, snap) {
@@ -111,7 +128,6 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
       ..sort((a, b) => b.fechaModificacion.compareTo(a.fechaModificacion));
     if (lista.isEmpty) return [];
     final color = _colores[estado]!;
-
     return [
       ExpansionTile(
         initiallyExpanded:
@@ -132,11 +148,16 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: ListTile(
-                title: Text(docs[s.idDocumento]?.nombre ?? 'Documento'),
+                leading: const Icon(Icons.description),
+                title: Text(
+                  docs[s.idDocumento]?.nombre ?? 'Documento ${s.idDocumento}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(
-                  'Período ${s.periodo} · '
+                  'Período ${s.periodo}\n'
                   '${s.fechaModificacion.toString().substring(0, 16)}',
                 ),
+                isThreeLine: true,
                 trailing: const Icon(Icons.chevron_right),
                 onTap: docs[s.idDocumento] == null
                     ? null

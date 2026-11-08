@@ -10,8 +10,7 @@ import 'crash_service.dart';
 class SolicitudService {
   static const Duration _tiempoMaximo = Duration(seconds: 10);
 
-  const SolicitudService({required CrashService crashService})
-    : _crashService = crashService;
+  const SolicitudService({required this._crashService});
 
   final CrashService _crashService;
 
@@ -26,7 +25,9 @@ class SolicitudService {
         final Query<Map<String, dynamic>> consulta = idUsuario == null
             ? _coleccion
             : _coleccion.where('idUsuario', isEqualTo: idUsuario);
-        final snapshot = await consulta.get();
+        final snapshot = await consulta.get(
+          const GetOptions(source: Source.server),
+        );
         return snapshot.docs
             .map((d) => Solicitud.fromJson({...d.data(), 'id': d.id}))
             .toList();

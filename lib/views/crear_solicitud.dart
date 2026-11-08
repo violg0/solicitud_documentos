@@ -27,6 +27,13 @@ class CrearSolicitudScreen extends StatefulWidget {
 class _CrearSolicitudScreenState extends State<CrearSolicitudScreen> {
   String? periodoSeleccionado;
   bool _enviando = false;
+  final _observacion = TextEditingController();
+
+  @override
+  void dispose() {
+    _observacion.dispose();
+    super.dispose();
+  }
 
   Future<void> _enviarSolicitud() async {
     if (periodoSeleccionado == null) {
@@ -43,7 +50,9 @@ class _CrearSolicitudScreenState extends State<CrearSolicitudScreen> {
       idUsuario: widget.usuario.uid,
       idDocumento: widget.documento.id,
       periodo: periodoSeleccionado!,
+      observacionEstudiante: _observacion.text.trim(),
       estado: EstadoSolicitud.solicitada,
+      fechaCreacion: DateTime.now(),
       fechaModificacion: DateTime.now(),
     );
 
@@ -81,6 +90,15 @@ class _CrearSolicitudScreenState extends State<CrearSolicitudScreen> {
                   .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                   .toList(),
               onChanged: (value) => setState(() => periodoSeleccionado = value),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _observacion,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Observación (opcional)',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(

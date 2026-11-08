@@ -21,18 +21,23 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final crashService = CrashService();
+  var firebaseReady = false;
 
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    firebaseReady = true;
     await crashService.configure();
   } catch (e) {
     debugPrint('No se pudo inicializar Firebase: $e');
   }
 
   final usuarioService = UsuarioService(crashService: crashService);
-  final authService = FirebaseAuthService(usuarioService);
+  final firebaseAuth = firebaseReady
+      ? FirebaseAuthService(usuarioService)
+      : null;
+  final authService = HybridAuthService(firebase: firebaseAuth);
 
   final db = AppDatabase();
   final documentoRepository = DocumentoRepository(

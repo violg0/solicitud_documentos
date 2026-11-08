@@ -4,8 +4,7 @@ import '../../models/documento.dart';
 import 'crash_service.dart';
 
 class DocumentoService {
-  const DocumentoService({required CrashService crashService})
-    : _crashService = crashService;
+  const DocumentoService({required this._crashService});
 
   final CrashService _crashService;
 

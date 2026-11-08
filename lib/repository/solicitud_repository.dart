@@ -31,11 +31,31 @@ class SolicitudRepository {
   }) async {
     try {
       final solicitudes = await remote.listar(idUsuario: idUsuario);
+      final locales = {
+        for (final solicitud in await local.getSolicitudes()) solicitud.id:
+            solicitud,
+      };
+      final reconciliadas = <Solicitud>[];
       for (final s in solicitudes) {
-        await local.saveSolicitud(s);
-        await local.markSynced(s.id);
+        final local = locales[s.id];
+        if (local == null ||
+            !local.fechaModificacion.isAfter(s.fechaModificacion)) {
+          await this.local.saveSolicitud(s);
+          await this.local.markSynced(s.id);
+          reconciliadas.add(s);
+        } else {
+          reconciliadas.add(local);
+        }
       }
-      return solicitudes;
+      final remotas = {for (final solicitud in solicitudes) solicitud.id};
+      reconciliadas.addAll(
+        locales.values.where(
+          (solicitud) =>
+              !remotas.contains(solicitud.id) &&
+              (idUsuario == null || solicitud.idUsuario == idUsuario),
+        ),
+      );
+      return reconciliadas;
     } catch (_) {
       return (await local.getSolicitudes())
           .where((s) => idUsuario == null || s.idUsuario == idUsuario)
@@ -91,7 +111,26 @@ class SolicitudRepository {
     Solicitud solicitud,
     EstadoSolicitud nuevo,
     Usuario usuario,
-  ) {
-    return remote.cambiarEstado(solicitud, nuevo, usuario);
+  ) async {
+    await remote.cambiarEstado(solicitud, nuevo, usuario);
+    final actualizada = Solicitud(
+      id: solicitud.id,
+      idDocumento: solicitud.idDocumento,
+      idUsuario: solicitud.idUsuario,
+      periodo: solicitud.periodo,
+      observacionEstudiante: solicitud.observacionEstudiante,
+      estado: nuevo,
+      fechaCreacion: solicitud.fechaCreacion,
+      fechaModificacion: DateTime.now(),
+      observacionRevision: solicitud.observacionRevision,
+      fechaEntrega: nuevo == EstadoSolicitud.entregada
+          ? DateTime.now()
+          : solicitud.fechaEntrega,
+      entregadoPor: nuevo == EstadoSolicitud.entregada
+          ? usuario.uid
+          : solicitud.entregadoPor,
+    );
+    await local.saveSolicitud(actualizada);
+    await local.markSynced(actualizada.id);
   }
 }

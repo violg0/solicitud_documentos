@@ -6,8 +6,7 @@ import 'crash_service.dart';
 class UsuarioService {
   static const Duration _tiempoMaximo = Duration(seconds: 10);
 
-  const UsuarioService({required CrashService crashService})
-    : _crashService = crashService;
+  const UsuarioService({required this._crashService});
 
   final CrashService _crashService;
 

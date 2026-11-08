@@ -51,6 +51,18 @@ class $SolicitudesTable extends Solicitudes
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _observacionEstudianteMeta =
+      const VerificationMeta('observacionEstudiante');
+  @override
+  late final GeneratedColumn<String> observacionEstudiante =
+      GeneratedColumn<String>(
+        'observacion_estudiante',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
   static const VerificationMeta _estadoMeta = const VerificationMeta('estado');
   @override
   late final GeneratedColumn<String> estado = GeneratedColumn<String>(
@@ -60,6 +72,18 @@ class $SolicitudesTable extends Solicitudes
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _fechaCreacionMeta = const VerificationMeta(
+    'fechaCreacion',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fechaCreacion =
+      GeneratedColumn<DateTime>(
+        'fecha_creacion',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
   static const VerificationMeta _fechaModificacionMeta = const VerificationMeta(
     'fechaModificacion',
   );
@@ -72,6 +96,39 @@ class $SolicitudesTable extends Solicitudes
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
+  static const VerificationMeta _observacionRevisionMeta =
+      const VerificationMeta('observacionRevision');
+  @override
+  late final GeneratedColumn<String> observacionRevision =
+      GeneratedColumn<String>(
+        'observacion_revision',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _fechaEntregaMeta = const VerificationMeta(
+    'fechaEntrega',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fechaEntrega = GeneratedColumn<DateTime>(
+    'fecha_entrega',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _entregadoPorMeta = const VerificationMeta(
+    'entregadoPor',
+  );
+  @override
+  late final GeneratedColumn<String> entregadoPor = GeneratedColumn<String>(
+    'entregado_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
     'pendingSync',
   );
@@ -93,8 +150,13 @@ class $SolicitudesTable extends Solicitudes
     idDocumento,
     idUsuario,
     periodo,
+    observacionEstudiante,
     estado,
+    fechaCreacion,
     fechaModificacion,
+    observacionRevision,
+    fechaEntrega,
+    entregadoPor,
     pendingSync,
   ];
   @override
@@ -141,6 +203,15 @@ class $SolicitudesTable extends Solicitudes
     } else if (isInserting) {
       context.missing(_periodoMeta);
     }
+    if (data.containsKey('observacion_estudiante')) {
+      context.handle(
+        _observacionEstudianteMeta,
+        observacionEstudiante.isAcceptableOrUnknown(
+          data['observacion_estudiante']!,
+          _observacionEstudianteMeta,
+        ),
+      );
+    }
     if (data.containsKey('estado')) {
       context.handle(
         _estadoMeta,
@@ -148,6 +219,17 @@ class $SolicitudesTable extends Solicitudes
       );
     } else if (isInserting) {
       context.missing(_estadoMeta);
+    }
+    if (data.containsKey('fecha_creacion')) {
+      context.handle(
+        _fechaCreacionMeta,
+        fechaCreacion.isAcceptableOrUnknown(
+          data['fecha_creacion']!,
+          _fechaCreacionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fechaCreacionMeta);
     }
     if (data.containsKey('fecha_modificacion')) {
       context.handle(
@@ -159,6 +241,33 @@ class $SolicitudesTable extends Solicitudes
       );
     } else if (isInserting) {
       context.missing(_fechaModificacionMeta);
+    }
+    if (data.containsKey('observacion_revision')) {
+      context.handle(
+        _observacionRevisionMeta,
+        observacionRevision.isAcceptableOrUnknown(
+          data['observacion_revision']!,
+          _observacionRevisionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fecha_entrega')) {
+      context.handle(
+        _fechaEntregaMeta,
+        fechaEntrega.isAcceptableOrUnknown(
+          data['fecha_entrega']!,
+          _fechaEntregaMeta,
+        ),
+      );
+    }
+    if (data.containsKey('entregado_por')) {
+      context.handle(
+        _entregadoPorMeta,
+        entregadoPor.isAcceptableOrUnknown(
+          data['entregado_por']!,
+          _entregadoPorMeta,
+        ),
+      );
     }
     if (data.containsKey('pending_sync')) {
       context.handle(
@@ -194,14 +303,34 @@ class $SolicitudesTable extends Solicitudes
         DriftSqlType.string,
         data['${effectivePrefix}periodo'],
       )!,
+      observacionEstudiante: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}observacion_estudiante'],
+      )!,
       estado: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}estado'],
+      )!,
+      fechaCreacion: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fecha_creacion'],
       )!,
       fechaModificacion: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}fecha_modificacion'],
       )!,
+      observacionRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}observacion_revision'],
+      ),
+      fechaEntrega: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fecha_entrega'],
+      ),
+      entregadoPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entregado_por'],
+      ),
       pendingSync: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}pending_sync'],
@@ -220,16 +349,26 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
   final String idDocumento;
   final String idUsuario;
   final String periodo;
+  final String observacionEstudiante;
   final String estado;
+  final DateTime fechaCreacion;
   final DateTime fechaModificacion;
+  final String? observacionRevision;
+  final DateTime? fechaEntrega;
+  final String? entregadoPor;
   final bool pendingSync;
   const SolicitudRow({
     required this.id,
     required this.idDocumento,
     required this.idUsuario,
     required this.periodo,
+    required this.observacionEstudiante,
     required this.estado,
+    required this.fechaCreacion,
     required this.fechaModificacion,
+    this.observacionRevision,
+    this.fechaEntrega,
+    this.entregadoPor,
     required this.pendingSync,
   });
   @override
@@ -239,8 +378,19 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     map['id_documento'] = Variable<String>(idDocumento);
     map['id_usuario'] = Variable<String>(idUsuario);
     map['periodo'] = Variable<String>(periodo);
+    map['observacion_estudiante'] = Variable<String>(observacionEstudiante);
     map['estado'] = Variable<String>(estado);
+    map['fecha_creacion'] = Variable<DateTime>(fechaCreacion);
     map['fecha_modificacion'] = Variable<DateTime>(fechaModificacion);
+    if (!nullToAbsent || observacionRevision != null) {
+      map['observacion_revision'] = Variable<String>(observacionRevision);
+    }
+    if (!nullToAbsent || fechaEntrega != null) {
+      map['fecha_entrega'] = Variable<DateTime>(fechaEntrega);
+    }
+    if (!nullToAbsent || entregadoPor != null) {
+      map['entregado_por'] = Variable<String>(entregadoPor);
+    }
     map['pending_sync'] = Variable<bool>(pendingSync);
     return map;
   }
@@ -251,8 +401,19 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       idDocumento: Value(idDocumento),
       idUsuario: Value(idUsuario),
       periodo: Value(periodo),
+      observacionEstudiante: Value(observacionEstudiante),
       estado: Value(estado),
+      fechaCreacion: Value(fechaCreacion),
       fechaModificacion: Value(fechaModificacion),
+      observacionRevision: observacionRevision == null && nullToAbsent
+          ? const Value.absent()
+          : Value(observacionRevision),
+      fechaEntrega: fechaEntrega == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fechaEntrega),
+      entregadoPor: entregadoPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(entregadoPor),
       pendingSync: Value(pendingSync),
     );
   }
@@ -267,10 +428,19 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       idDocumento: serializer.fromJson<String>(json['idDocumento']),
       idUsuario: serializer.fromJson<String>(json['idUsuario']),
       periodo: serializer.fromJson<String>(json['periodo']),
+      observacionEstudiante: serializer.fromJson<String>(
+        json['observacionEstudiante'],
+      ),
       estado: serializer.fromJson<String>(json['estado']),
+      fechaCreacion: serializer.fromJson<DateTime>(json['fechaCreacion']),
       fechaModificacion: serializer.fromJson<DateTime>(
         json['fechaModificacion'],
       ),
+      observacionRevision: serializer.fromJson<String?>(
+        json['observacionRevision'],
+      ),
+      fechaEntrega: serializer.fromJson<DateTime?>(json['fechaEntrega']),
+      entregadoPor: serializer.fromJson<String?>(json['entregadoPor']),
       pendingSync: serializer.fromJson<bool>(json['pendingSync']),
     );
   }
@@ -282,8 +452,13 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
       'idDocumento': serializer.toJson<String>(idDocumento),
       'idUsuario': serializer.toJson<String>(idUsuario),
       'periodo': serializer.toJson<String>(periodo),
+      'observacionEstudiante': serializer.toJson<String>(observacionEstudiante),
       'estado': serializer.toJson<String>(estado),
+      'fechaCreacion': serializer.toJson<DateTime>(fechaCreacion),
       'fechaModificacion': serializer.toJson<DateTime>(fechaModificacion),
+      'observacionRevision': serializer.toJson<String?>(observacionRevision),
+      'fechaEntrega': serializer.toJson<DateTime?>(fechaEntrega),
+      'entregadoPor': serializer.toJson<String?>(entregadoPor),
       'pendingSync': serializer.toJson<bool>(pendingSync),
     };
   }
@@ -293,16 +468,28 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     String? idDocumento,
     String? idUsuario,
     String? periodo,
+    String? observacionEstudiante,
     String? estado,
+    DateTime? fechaCreacion,
     DateTime? fechaModificacion,
+    Value<String?> observacionRevision = const Value.absent(),
+    Value<DateTime?> fechaEntrega = const Value.absent(),
+    Value<String?> entregadoPor = const Value.absent(),
     bool? pendingSync,
   }) => SolicitudRow(
     id: id ?? this.id,
     idDocumento: idDocumento ?? this.idDocumento,
     idUsuario: idUsuario ?? this.idUsuario,
     periodo: periodo ?? this.periodo,
+    observacionEstudiante: observacionEstudiante ?? this.observacionEstudiante,
     estado: estado ?? this.estado,
+    fechaCreacion: fechaCreacion ?? this.fechaCreacion,
     fechaModificacion: fechaModificacion ?? this.fechaModificacion,
+    observacionRevision: observacionRevision.present
+        ? observacionRevision.value
+        : this.observacionRevision,
+    fechaEntrega: fechaEntrega.present ? fechaEntrega.value : this.fechaEntrega,
+    entregadoPor: entregadoPor.present ? entregadoPor.value : this.entregadoPor,
     pendingSync: pendingSync ?? this.pendingSync,
   );
   SolicitudRow copyWithCompanion(SolicitudesCompanion data) {
@@ -313,10 +500,25 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
           : this.idDocumento,
       idUsuario: data.idUsuario.present ? data.idUsuario.value : this.idUsuario,
       periodo: data.periodo.present ? data.periodo.value : this.periodo,
+      observacionEstudiante: data.observacionEstudiante.present
+          ? data.observacionEstudiante.value
+          : this.observacionEstudiante,
       estado: data.estado.present ? data.estado.value : this.estado,
+      fechaCreacion: data.fechaCreacion.present
+          ? data.fechaCreacion.value
+          : this.fechaCreacion,
       fechaModificacion: data.fechaModificacion.present
           ? data.fechaModificacion.value
           : this.fechaModificacion,
+      observacionRevision: data.observacionRevision.present
+          ? data.observacionRevision.value
+          : this.observacionRevision,
+      fechaEntrega: data.fechaEntrega.present
+          ? data.fechaEntrega.value
+          : this.fechaEntrega,
+      entregadoPor: data.entregadoPor.present
+          ? data.entregadoPor.value
+          : this.entregadoPor,
       pendingSync: data.pendingSync.present
           ? data.pendingSync.value
           : this.pendingSync,
@@ -330,8 +532,13 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
           ..write('idDocumento: $idDocumento, ')
           ..write('idUsuario: $idUsuario, ')
           ..write('periodo: $periodo, ')
+          ..write('observacionEstudiante: $observacionEstudiante, ')
           ..write('estado: $estado, ')
+          ..write('fechaCreacion: $fechaCreacion, ')
           ..write('fechaModificacion: $fechaModificacion, ')
+          ..write('observacionRevision: $observacionRevision, ')
+          ..write('fechaEntrega: $fechaEntrega, ')
+          ..write('entregadoPor: $entregadoPor, ')
           ..write('pendingSync: $pendingSync')
           ..write(')'))
         .toString();
@@ -343,8 +550,13 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
     idDocumento,
     idUsuario,
     periodo,
+    observacionEstudiante,
     estado,
+    fechaCreacion,
     fechaModificacion,
+    observacionRevision,
+    fechaEntrega,
+    entregadoPor,
     pendingSync,
   );
   @override
@@ -355,8 +567,13 @@ class SolicitudRow extends DataClass implements Insertable<SolicitudRow> {
           other.idDocumento == this.idDocumento &&
           other.idUsuario == this.idUsuario &&
           other.periodo == this.periodo &&
+          other.observacionEstudiante == this.observacionEstudiante &&
           other.estado == this.estado &&
+          other.fechaCreacion == this.fechaCreacion &&
           other.fechaModificacion == this.fechaModificacion &&
+          other.observacionRevision == this.observacionRevision &&
+          other.fechaEntrega == this.fechaEntrega &&
+          other.entregadoPor == this.entregadoPor &&
           other.pendingSync == this.pendingSync);
 }
 
@@ -365,8 +582,13 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
   final Value<String> idDocumento;
   final Value<String> idUsuario;
   final Value<String> periodo;
+  final Value<String> observacionEstudiante;
   final Value<String> estado;
+  final Value<DateTime> fechaCreacion;
   final Value<DateTime> fechaModificacion;
+  final Value<String?> observacionRevision;
+  final Value<DateTime?> fechaEntrega;
+  final Value<String?> entregadoPor;
   final Value<bool> pendingSync;
   final Value<int> rowid;
   const SolicitudesCompanion({
@@ -374,8 +596,13 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     this.idDocumento = const Value.absent(),
     this.idUsuario = const Value.absent(),
     this.periodo = const Value.absent(),
+    this.observacionEstudiante = const Value.absent(),
     this.estado = const Value.absent(),
+    this.fechaCreacion = const Value.absent(),
     this.fechaModificacion = const Value.absent(),
+    this.observacionRevision = const Value.absent(),
+    this.fechaEntrega = const Value.absent(),
+    this.entregadoPor = const Value.absent(),
     this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -384,8 +611,13 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     required String idDocumento,
     required String idUsuario,
     required String periodo,
+    this.observacionEstudiante = const Value.absent(),
     required String estado,
+    required DateTime fechaCreacion,
     required DateTime fechaModificacion,
+    this.observacionRevision = const Value.absent(),
+    this.fechaEntrega = const Value.absent(),
+    this.entregadoPor = const Value.absent(),
     this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -393,14 +625,20 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
        idUsuario = Value(idUsuario),
        periodo = Value(periodo),
        estado = Value(estado),
+       fechaCreacion = Value(fechaCreacion),
        fechaModificacion = Value(fechaModificacion);
   static Insertable<SolicitudRow> custom({
     Expression<String>? id,
     Expression<String>? idDocumento,
     Expression<String>? idUsuario,
     Expression<String>? periodo,
+    Expression<String>? observacionEstudiante,
     Expression<String>? estado,
+    Expression<DateTime>? fechaCreacion,
     Expression<DateTime>? fechaModificacion,
+    Expression<String>? observacionRevision,
+    Expression<DateTime>? fechaEntrega,
+    Expression<String>? entregadoPor,
     Expression<bool>? pendingSync,
     Expression<int>? rowid,
   }) {
@@ -409,8 +647,15 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
       if (idDocumento != null) 'id_documento': idDocumento,
       if (idUsuario != null) 'id_usuario': idUsuario,
       if (periodo != null) 'periodo': periodo,
+      if (observacionEstudiante != null)
+        'observacion_estudiante': observacionEstudiante,
       if (estado != null) 'estado': estado,
+      if (fechaCreacion != null) 'fecha_creacion': fechaCreacion,
       if (fechaModificacion != null) 'fecha_modificacion': fechaModificacion,
+      if (observacionRevision != null)
+        'observacion_revision': observacionRevision,
+      if (fechaEntrega != null) 'fecha_entrega': fechaEntrega,
+      if (entregadoPor != null) 'entregado_por': entregadoPor,
       if (pendingSync != null) 'pending_sync': pendingSync,
       if (rowid != null) 'rowid': rowid,
     });
@@ -421,8 +666,13 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     Value<String>? idDocumento,
     Value<String>? idUsuario,
     Value<String>? periodo,
+    Value<String>? observacionEstudiante,
     Value<String>? estado,
+    Value<DateTime>? fechaCreacion,
     Value<DateTime>? fechaModificacion,
+    Value<String?>? observacionRevision,
+    Value<DateTime?>? fechaEntrega,
+    Value<String?>? entregadoPor,
     Value<bool>? pendingSync,
     Value<int>? rowid,
   }) {
@@ -431,8 +681,14 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
       idDocumento: idDocumento ?? this.idDocumento,
       idUsuario: idUsuario ?? this.idUsuario,
       periodo: periodo ?? this.periodo,
+      observacionEstudiante:
+          observacionEstudiante ?? this.observacionEstudiante,
       estado: estado ?? this.estado,
+      fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       fechaModificacion: fechaModificacion ?? this.fechaModificacion,
+      observacionRevision: observacionRevision ?? this.observacionRevision,
+      fechaEntrega: fechaEntrega ?? this.fechaEntrega,
+      entregadoPor: entregadoPor ?? this.entregadoPor,
       pendingSync: pendingSync ?? this.pendingSync,
       rowid: rowid ?? this.rowid,
     );
@@ -453,11 +709,28 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
     if (periodo.present) {
       map['periodo'] = Variable<String>(periodo.value);
     }
+    if (observacionEstudiante.present) {
+      map['observacion_estudiante'] = Variable<String>(
+        observacionEstudiante.value,
+      );
+    }
     if (estado.present) {
       map['estado'] = Variable<String>(estado.value);
     }
+    if (fechaCreacion.present) {
+      map['fecha_creacion'] = Variable<DateTime>(fechaCreacion.value);
+    }
     if (fechaModificacion.present) {
       map['fecha_modificacion'] = Variable<DateTime>(fechaModificacion.value);
+    }
+    if (observacionRevision.present) {
+      map['observacion_revision'] = Variable<String>(observacionRevision.value);
+    }
+    if (fechaEntrega.present) {
+      map['fecha_entrega'] = Variable<DateTime>(fechaEntrega.value);
+    }
+    if (entregadoPor.present) {
+      map['entregado_por'] = Variable<String>(entregadoPor.value);
     }
     if (pendingSync.present) {
       map['pending_sync'] = Variable<bool>(pendingSync.value);
@@ -475,8 +748,13 @@ class SolicitudesCompanion extends UpdateCompanion<SolicitudRow> {
           ..write('idDocumento: $idDocumento, ')
           ..write('idUsuario: $idUsuario, ')
           ..write('periodo: $periodo, ')
+          ..write('observacionEstudiante: $observacionEstudiante, ')
           ..write('estado: $estado, ')
+          ..write('fechaCreacion: $fechaCreacion, ')
           ..write('fechaModificacion: $fechaModificacion, ')
+          ..write('observacionRevision: $observacionRevision, ')
+          ..write('fechaEntrega: $fechaEntrega, ')
+          ..write('entregadoPor: $entregadoPor, ')
           ..write('pendingSync: $pendingSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1349,8 +1627,13 @@ typedef $$SolicitudesTableCreateCompanionBuilder =
       required String idDocumento,
       required String idUsuario,
       required String periodo,
+      Value<String> observacionEstudiante,
       required String estado,
+      required DateTime fechaCreacion,
       required DateTime fechaModificacion,
+      Value<String?> observacionRevision,
+      Value<DateTime?> fechaEntrega,
+      Value<String?> entregadoPor,
       Value<bool> pendingSync,
       Value<int> rowid,
     });
@@ -1360,8 +1643,13 @@ typedef $$SolicitudesTableUpdateCompanionBuilder =
       Value<String> idDocumento,
       Value<String> idUsuario,
       Value<String> periodo,
+      Value<String> observacionEstudiante,
       Value<String> estado,
+      Value<DateTime> fechaCreacion,
       Value<DateTime> fechaModificacion,
+      Value<String?> observacionRevision,
+      Value<DateTime?> fechaEntrega,
+      Value<String?> entregadoPor,
       Value<bool> pendingSync,
       Value<int> rowid,
     });
@@ -1395,13 +1683,38 @@ class $$SolicitudesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get observacionEstudiante => $composableBuilder(
+    column: $table.observacionEstudiante,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get estado => $composableBuilder(
     column: $table.estado,
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get fechaCreacion => $composableBuilder(
+    column: $table.fechaCreacion,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get fechaModificacion => $composableBuilder(
     column: $table.fechaModificacion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get observacionRevision => $composableBuilder(
+    column: $table.observacionRevision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fechaEntrega => $composableBuilder(
+    column: $table.fechaEntrega,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entregadoPor => $composableBuilder(
+    column: $table.entregadoPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1440,13 +1753,38 @@ class $$SolicitudesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get observacionEstudiante => $composableBuilder(
+    column: $table.observacionEstudiante,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get estado => $composableBuilder(
     column: $table.estado,
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get fechaCreacion => $composableBuilder(
+    column: $table.fechaCreacion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get fechaModificacion => $composableBuilder(
     column: $table.fechaModificacion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get observacionRevision => $composableBuilder(
+    column: $table.observacionRevision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fechaEntrega => $composableBuilder(
+    column: $table.fechaEntrega,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entregadoPor => $composableBuilder(
+    column: $table.entregadoPor,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1479,11 +1817,36 @@ class $$SolicitudesTableAnnotationComposer
   GeneratedColumn<String> get periodo =>
       $composableBuilder(column: $table.periodo, builder: (column) => column);
 
+  GeneratedColumn<String> get observacionEstudiante => $composableBuilder(
+    column: $table.observacionEstudiante,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get estado =>
       $composableBuilder(column: $table.estado, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get fechaCreacion => $composableBuilder(
+    column: $table.fechaCreacion,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get fechaModificacion => $composableBuilder(
     column: $table.fechaModificacion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get observacionRevision => $composableBuilder(
+    column: $table.observacionRevision,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get fechaEntrega => $composableBuilder(
+    column: $table.fechaEntrega,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get entregadoPor => $composableBuilder(
+    column: $table.entregadoPor,
     builder: (column) => column,
   );
 
@@ -1528,8 +1891,13 @@ class $$SolicitudesTableTableManager
                 Value<String> idDocumento = const Value.absent(),
                 Value<String> idUsuario = const Value.absent(),
                 Value<String> periodo = const Value.absent(),
+                Value<String> observacionEstudiante = const Value.absent(),
                 Value<String> estado = const Value.absent(),
+                Value<DateTime> fechaCreacion = const Value.absent(),
                 Value<DateTime> fechaModificacion = const Value.absent(),
+                Value<String?> observacionRevision = const Value.absent(),
+                Value<DateTime?> fechaEntrega = const Value.absent(),
+                Value<String?> entregadoPor = const Value.absent(),
                 Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SolicitudesCompanion(
@@ -1537,8 +1905,13 @@ class $$SolicitudesTableTableManager
                 idDocumento: idDocumento,
                 idUsuario: idUsuario,
                 periodo: periodo,
+                observacionEstudiante: observacionEstudiante,
                 estado: estado,
+                fechaCreacion: fechaCreacion,
                 fechaModificacion: fechaModificacion,
+                observacionRevision: observacionRevision,
+                fechaEntrega: fechaEntrega,
+                entregadoPor: entregadoPor,
                 pendingSync: pendingSync,
                 rowid: rowid,
               ),
@@ -1548,8 +1921,13 @@ class $$SolicitudesTableTableManager
                 required String idDocumento,
                 required String idUsuario,
                 required String periodo,
+                Value<String> observacionEstudiante = const Value.absent(),
                 required String estado,
+                required DateTime fechaCreacion,
                 required DateTime fechaModificacion,
+                Value<String?> observacionRevision = const Value.absent(),
+                Value<DateTime?> fechaEntrega = const Value.absent(),
+                Value<String?> entregadoPor = const Value.absent(),
                 Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SolicitudesCompanion.insert(
@@ -1557,8 +1935,13 @@ class $$SolicitudesTableTableManager
                 idDocumento: idDocumento,
                 idUsuario: idUsuario,
                 periodo: periodo,
+                observacionEstudiante: observacionEstudiante,
                 estado: estado,
+                fechaCreacion: fechaCreacion,
                 fechaModificacion: fechaModificacion,
+                observacionRevision: observacionRevision,
+                fechaEntrega: fechaEntrega,
+                entregadoPor: entregadoPor,
                 pendingSync: pendingSync,
                 rowid: rowid,
               ),

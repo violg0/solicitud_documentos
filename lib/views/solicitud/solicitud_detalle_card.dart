@@ -87,8 +87,17 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
           idDocumento: _solicitud.idDocumento,
           idUsuario: _solicitud.idUsuario,
           periodo: _solicitud.periodo,
+          observacionEstudiante: _solicitud.observacionEstudiante,
           estado: nuevo,
+          fechaCreacion: _solicitud.fechaCreacion,
           fechaModificacion: DateTime.now(),
+          observacionRevision: _solicitud.observacionRevision,
+          fechaEntrega: nuevo == EstadoSolicitud.entregada
+              ? DateTime.now()
+              : _solicitud.fechaEntrega,
+          entregadoPor: nuevo == EstadoSolicitud.entregada
+              ? widget.usuario.uid
+              : _solicitud.entregadoPor,
         );
         _motivos = _cargarMotivos();
       });
@@ -128,6 +137,8 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
         Text(doc.descripcion),
         const Divider(height: 32),
         Text('Período: ${_solicitud.periodo}'),
+        if (_solicitud.observacionEstudiante.isNotEmpty)
+          Text('Observación: ${_solicitud.observacionEstudiante}'),
         Text('Solicitante: ${_solicitud.idUsuario}'),
         Chip(label: Text(_solicitud.estado.name)),
         if (acciones.isNotEmpty) ...[
@@ -148,8 +159,9 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
             if (snap.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snap.hasError)
+            if (snap.hasError) {
               return const Text('No se pudo cargar el historial');
+            }
             final motivos = snap.data!;
             if (motivos.isEmpty) return const Text('Sin cambios registrados');
             return Column(

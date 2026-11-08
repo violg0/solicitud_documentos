@@ -63,6 +63,7 @@ class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
               MaterialPageRoute(
                 builder: (_) => BandejaSolicitudesScreen(
                   usuario: usuario,
+                  authService: authService,
                   solicitudRepository: solicitudRepository,
                   documentoRepository: documentoRepository,
                   motivoRepository: motivoRepository,

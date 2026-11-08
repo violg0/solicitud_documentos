@@ -3,7 +3,10 @@ rules_version = '2';
 // Reglas de negocio impuestas del lado del servidor.
 // Campos reales del proyecto (ver lib/models):
 //   Usuarios/{uid}      -> nombre, email, rol  (el uid es el id del documento)
-//   Solicitudes/{id}    -> idDocumento, idUsuario, periodo, estado, fechaModificacion
+//   Solicitudes/{id}    -> idDocumento, idUsuario, periodo,
+//                          observacionEstudiante, estado, fechaCreacion,
+//                          fechaModificacion, observacionRevision,
+//                          fechaEntrega, entregadoPor
 //   Motivos/{id}        -> idSolicitud, mensaje, estado, fechaCreacion
 //   rol: 'estudiante' | 'revisor' | 'secretaria'
 //
@@ -71,7 +74,9 @@ service cloud.firestore {
         && request.resource.data.idUsuario == request.auth.uid
         && request.resource.data.estado == 'solicitada'
         && request.resource.data.keys().hasOnly(
-             ['idDocumento', 'idUsuario', 'periodo', 'estado', 'fechaModificacion']);
+             ['idDocumento', 'idUsuario', 'periodo', 'observacionEstudiante',
+              'estado', 'fechaCreacion', 'fechaModificacion',
+              'observacionRevision', 'fechaEntrega', 'entregadoPor']);
 
       allow update: if
         // Revisor/secretaria: solo pueden tocar estado y fechaModificacion.

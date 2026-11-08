@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:uuid/uuid.dart';
 
 import '../../models/estados.dart';
+import '../../models/documento.dart';
 import '../../models/motivo.dart';
 import '../../models/solicitud.dart';
 import '../../models/usuario.dart';
@@ -14,6 +15,7 @@ import '../../repository/solicitud_repository.dart';
 import '../../service/firebase/auth_service.dart';
 import '../../service/firebase/crash_service.dart';
 import '../documentos/catalogo_appbar.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SolicitudesScreen extends StatefulWidget {
@@ -39,7 +41,7 @@ class SolicitudesScreen extends StatefulWidget {
 }
 
 class _SolicitudesScreenState extends State<SolicitudesScreen> {
-  late Future<List<Solicitud>> _futureSolicitudes;
+  late Future<(List<Solicitud>, Map<String, Documento>)> _futureDatos;
   String? filtro;
 
   Future<void> guardarFiltro() async {
@@ -74,17 +76,25 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
     super.initState();
     cargarFiltro();
     unawaited(widget.solicitudRepository.syncPending());
-    _futureSolicitudes = widget.solicitudRepository.obtenerSolicitudes(
-      idUsuario: widget.usuario.uid,
+    _futureDatos = _cargarDatos();
+  }
+
+  Future<(List<Solicitud>, Map<String, Documento>)> _cargarDatos() async {
+    final resultados = await Future.wait([
+      widget.solicitudRepository.obtenerSolicitudes(
+        idUsuario: widget.usuario.uid,
+      ),
+      widget.documentoRepository.obtenerTodos(),
+    ]);
+    final documentos = resultados[1] as List<Documento>;
+    return (
+      resultados[0] as List<Solicitud>,
+      {for (final documento in documentos) documento.id: documento},
     );
   }
 
   void retrySolicitudes() {
-    setState(() {
-      _futureSolicitudes = widget.solicitudRepository.obtenerSolicitudes(
-        idUsuario: widget.usuario.uid,
-      );
-    });
+    setState(() => _futureDatos = _cargarDatos());
   }
 
   Future<String?> _pedirMotivoCancelacion() {
@@ -186,8 +196,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
         children: [
           _filtros(),
           Expanded(
-            child: FutureBuilder<List<Solicitud>>(
-              future: _futureSolicitudes,
+            child: FutureBuilder<(List<Solicitud>, Map<String, Documento>)>(
+              future: _futureDatos,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -208,7 +218,8 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                   );
                 }
 
-                var mias = (snapshot.data ?? [])
+                final (solicitudes, documentos) = snapshot.data!;
+                var mias = solicitudes
                     .where((s) => s.idUsuario == widget.usuario.uid)
                     .toList();
 
@@ -230,8 +241,11 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
                         s.estado == EstadoSolicitud.solicitada &&
                         s.idUsuario == widget.usuario.uid;
                     return ListTile(
-                      title: Text('Período ${s.periodo}'),
-                      subtitle: Text(s.estado.name),
+                      title: Text(
+                        documentos[s.idDocumento]?.nombre ??
+                            'Documento no disponible',
+                      ),
+                      subtitle: Text('Período ${s.periodo} · ${s.estado.name}'),
                       onTap: cancelable ? () => _cancelar(s) : null,
                     );
                   },
