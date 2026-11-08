@@ -38,7 +38,9 @@ class MotivoService {
   }, 'MotivoService.obtenerPorId');
 
   Future<String> guardar(Motivo motivo) => _crashService.registrar(() async {
-    final docRef = _coleccion.doc();
+    // El id lo genera el cliente (UUID), igual que en SolicitudService.guardar,
+    // para que SQLite y Firestore guarden el mismo documento.
+    final docRef = _coleccion.doc(motivo.id);
     await docRef.set(motivo.toJson()..remove('id')).timeout(_tiempoMaximo);
     return docRef.id;
   }, 'MotivoService.guardar');

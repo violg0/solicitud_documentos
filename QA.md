@@ -1,6 +1,6 @@
 # Matriz de QA — pruebas manuales de la interfaz
 
-App: **Solicitud de documentos académicos** · versión **1.1.0+2**
+App: **Solicitud de documentos académicos** · versión **1.1.1+3**
 Las reglas de seguridad de Firestore se prueban aparte, de forma automática
 (ver [`firestore-tests/`](firestore-tests/README.md)).
 
@@ -57,7 +57,7 @@ Tras cambiar un rol hay que cerrar sesión y volver a ingresar.
 |---|---|---|---|---|
 | QA-14 | Crear solicitud con internet | 1. Como estudiante A, tocar "Certificado de notas".<br>2. Elegir un período académico.<br>3. Tocar "Enviar solicitud".<br>4. Abrir "Mis solicitudes". | Vuelve al catálogo. La lista muestra "Período …" con estado `solicitada`. En Firestore aparece un documento en `Solicitudes` con el `idUsuario` de estudiante A y estado `solicitada`. | |
 | QA-15 | Crear solicitud sin elegir período | Abrir un documento habilitado y tocar "Enviar solicitud" sin elegir período. | Muestra el aviso "Debes seleccionar el periodo académico" y no envía nada. | |
-| QA-16 | Crear solicitud sin internet | 1. Activar el modo avión.<br>2. Crear una solicitud de "Paz y salvo" con un período.<br>3. Desactivar el modo avión.<br>4. Abrir "Mis solicitudes" (esto dispara la sincronización); si hace falta, salir y volver a entrar. | Con el avión activo la pantalla se cierra normalmente: la solicitud se guardó en el dispositivo y no se pierde. Al recuperar la red y abrir "Mis solicitudes", se sincroniza: el documento aparece en `Solicitudes` de Firestore (una sola vez, sin duplicados) y en la lista. Mientras está sin sincronizar puede no verse en la lista (ver limitación 4 del README). | |
+| QA-16 | Crear solicitud sin internet | 1. Activar el modo avión.<br>2. Crear una solicitud de "Paz y salvo" con un período.<br>3. Desactivar el modo avión.<br>4. Abrir "Mis solicitudes" (esto dispara la sincronización); si hace falta, salir y volver a entrar. | Con el avión activo la pantalla se cierra normalmente: la solicitud se guardó en el dispositivo y no se pierde. Al recuperar la red y abrir "Mis solicitudes", se sincroniza: el documento aparece en `Solicitudes` de Firestore (una sola vez, sin duplicados) y en la lista. Mientras está sin sincronizar puede no verse en la lista (ver limitación 2 del README). | |
 
 ### Mis solicitudes (estudiante)
 
@@ -65,8 +65,8 @@ Tras cambiar un rol hay que cerrar sesión y volver a ingresar.
 |---|---|---|---|---|
 | QA-17 | Solo se ven las solicitudes propias | 1. Con estudiante A, crear una solicitud.<br>2. Cerrar sesión e ingresar como estudiante B.<br>3. Crear una solicitud de otro documento.<br>4. Abrir "Mis solicitudes" con B y luego con A. | Cada estudiante ve únicamente las suyas. | |
 | QA-18 | Lista vacía | Con una cuenta recién registrada, abrir "Mis solicitudes". | Muestra "No tienes solicitudes". | |
-| QA-19 | Filtro de "Mis solicitudes" | Buscar en la pantalla un control para filtrar por estado. | **Limitación conocida:** el filtro existe en el código pero la interfaz no tiene ningún control para usarlo, así que se ve siempre la lista completa. Marcar `N/A` y dejar la nota. | |
-| QA-20 | Cancelar como estudiante | Con una solicitud en estado `solicitada`, tocar su fila en "Mis solicitudes". | **Limitación conocida:** las filas no abren detalle, por lo que hoy el estudiante no puede cancelar desde la interfaz. Esperado actual: no ocurre nada al tocar. (La regla de negocio y la de Firestore sí permiten `solicitada → cancelada`.) | |
+| QA-19 | Filtro de "Mis solicitudes" | 1. Con estudiante A, que tenga solicitudes en distintos estados (p. ej. tras QA-14 y QA-23), abrir "Mis solicitudes".<br>2. Revisar la fila de chips que hay arriba de la lista.<br>3. Tocar el chip `aprobada` y luego "Todas".<br>4. Elegir un estado, salir de la pantalla y volver a entrar. | Arriba de la lista hay chips con "Todas", `solicitada`, `enRevision`, `aprobada`, `rechazada`, `entregada` y `cancelada`, con uno seleccionado. Al elegir un estado solo se listan las solicitudes en ese estado (si no hay ninguna: "No tienes solicitudes"); "Todas" las muestra todas. El filtro elegido se recuerda al volver a abrir la pantalla. | |
+| QA-20 | Cancelar como estudiante | 1. Con una solicitud propia en estado `solicitada`, tocar su fila en "Mis solicitudes".<br>2. Comprobar el diálogo "¿Cancelar esta solicitud?" con el campo "Motivo".<br>3. Tocar "Volver" y comprobar que nada cambia.<br>4. Volver a tocar la fila, escribir un motivo y tocar "Confirmar".<br>5. Tocar una fila cuyo estado no sea `solicitada`. | Con "Volver" no cambia el estado ni se crea ningún motivo. Con "Confirmar" la lista se recarga y la fila pasa a `cancelada`; en Firestore la solicitud queda `cancelada` y aparece un documento nuevo en `Motivos` (con su propio id) con el texto escrito y estado `cancelada`. Al tocar una fila que no está `solicitada` no ocurre nada. Si la solicitud aún no se sincronizó con Firestore, la cancelación falla mostrando el error técnico (limitación 4 del README). | |
 
 ### Bandeja y cambio de estado (revisor y secretaria)
 

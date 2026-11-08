@@ -6,8 +6,8 @@ académicos y el personal de la institución los revise, apruebe y entregue.
 | | |
 |---|---|
 | **Curso** | Desarrollo Móvil, G61-7 |
-| **Integrantes** | Felipe Valencia Gómez · [nombre de Lenin] |
-| **Versión** | 1.1.0+2 |
+| **Integrantes** | Lenin Ospina Lamprea · Violeta Agudelo Carmona |
+| **Versión** | 1.1.1+3 |
 | **Plataforma probada** | Android (emulador, API 37) |
 
 ## Caso de uso
@@ -30,7 +30,7 @@ roles `revisor` y `secretaria` solo se asignan a mano (ver
 
 | Rol | Qué puede hacer en la app |
 |---|---|
-| **estudiante** | Ver el catálogo, crear solicitudes de documentos habilitados (eligiendo período) y ver **sus** solicitudes en "Mis solicitudes". Por reglas de negocio puede cancelar su propia solicitud mientras está `solicitada` (ver [Limitaciones](#limitaciones-conocidas): hoy la interfaz no lo expone). |
+| **estudiante** | Ver el catálogo, crear solicitudes de documentos habilitados (eligiendo período) y ver **sus** solicitudes en "Mis solicitudes", donde puede filtrarlas por estado. Mientras una solicitud está `solicitada` puede cancelarla tocándola (la app pide un motivo). |
 | **revisor** | Abrir la **Bandeja** (todas las solicitudes agrupadas por estado), pasar `solicitada → enRevision` y decidir `enRevision → aprobada` o `rechazada`, con un mensaje en cada cambio. |
 | **secretaria** | Abrir la **Bandeja** y marcar `aprobada → entregada`. |
 
@@ -169,7 +169,7 @@ Los nombres corresponden a las clases de `lib/models/`.
 
 | Campo | Tipo | Notas |
 |---|---|---|
-| `id` | String | Lo genera Firestore |
+| `id` | String | UUID v4 generado en el dispositivo; es el mismo en SQLite y en Firestore |
 | `idSolicitud` | String | |
 | `mensaje` | String | Texto escrito por quien cambia el estado |
 | `estado` | `EstadoSolicitud` | Estado al que pasó la solicitud |
@@ -258,40 +258,36 @@ catálogo y con los motivos (historial).
    (`if (documento == null) continue;`): queda con `pendingSync = true` para
    siempre, se reintenta en cada apertura de "Mis solicitudes" y nunca se avisa
    al usuario ni se sube.
-2. **El estudiante no puede cancelar desde la interfaz.** La lógica y las reglas
-   de Firestore permiten `solicitada → cancelada`, pero las filas de "Mis
-   solicitudes" no abren ningún detalle; el botón de cambiar estado solo existe
-   en la pantalla de detalle de la bandeja (revisor/secretaria).
-3. **El filtro de "Mis solicitudes" no tiene control en pantalla.**
-   `solicitudes.dart` lee un filtro guardado en `SharedPreferences`, pero
-   `guardarFiltro()` nunca se llama y nada en la interfaz lo modifica.
-4. **Una solicitud pendiente puede no verse en "Mis solicitudes".** Si la lectura
+2. **Una solicitud pendiente puede no verse en "Mis solicitudes".** Si la lectura
    de Firestore responde (también puede hacerlo desde la caché propia del SDK
    estando sin conexión), la lista muestra solo ese resultado y deja fuera las
    solicitudes que siguen pendientes en el SQLite local. La solicitud no se
    pierde: aparece cuando se sincroniza.
-5. **El cambio de estado necesita conexión.** `cambiarEstado` escribe directo en
+3. **El cambio de estado necesita conexión.** `cambiarEstado` escribe directo en
    Firestore; sin red falla a los 10 s con un mensaje de error (la escritura
    puede quedar encolada por el propio SDK de Firestore). Tampoco actualiza la
    copia local, que se pone al día en la siguiente lectura online.
-6. **Los motivos no se reintentan y su caché local es poco fiable.** Se guardan
-   en SQLite con `id` vacío (el id real lo asigna Firestore), así que cada
-   motivo nuevo sobrescribe al anterior en la caché local, y si la subida falla
-   no hay reintento: la columna `pendingSync` de motivos y documentos existe
-   pero nada la lee.
-7. **El servidor no impone el orden de estados a revisor y secretaria.** Las
+4. **Cancelar una solicitud que aún no se sincronizó falla con el error crudo.**
+   Si el estudiante cancela una solicitud que sigue pendiente en el SQLite local
+   y todavía no existe en Firestore, la actualización del estado falla y la app
+   muestra en un aviso el texto técnico del error del servidor, sin un mensaje
+   amigable. Funciona al reintentar cuando la solicitud ya se sincronizó.
+5. **Los motivos no se reintentan.** Se guardan primero en SQLite y luego se
+   suben a Firestore; si la subida falla, no hay reintento: la columna
+   `pendingSync` de motivos y documentos existe pero nada la lee.
+6. **El servidor no impone el orden de estados a revisor y secretaria.** Las
    reglas les permiten cambiar `estado` a cualquier valor; la secuencia válida
    solo se exige en la app.
-8. **Sin recuperación de contraseña ni verificación de correo.**
-9. **El APK `release` se firma con la llave de debug** (configuración por
+7. **Sin recuperación de contraseña ni verificación de correo.**
+8. **El APK `release` se firma con la llave de debug** (configuración por
    defecto del proyecto en `android/app/build.gradle.kts`); sirve para la
    entrega y pruebas, no para publicar en una tienda.
-10. **El catálogo depende de un servicio de terceros** (mockapi.io, plan gratuito)
-    sin autenticación ni garantía de disponibilidad.
-11. **Pruebas automáticas limitadas.** Hay 77 pruebas de las reglas de Firestore
+9. **El catálogo depende de un servicio de terceros** (mockapi.io, plan gratuito)
+   sin autenticación ni garantía de disponibilidad.
+10. **Pruebas automáticas limitadas.** Hay 77 pruebas de las reglas de Firestore
     (`firestore-tests/`), pero la app solo tiene un test de ejemplo; la
     verificación de la interfaz es manual (ver [`QA.md`](QA.md)).
-12. **Código sin usar:** `lib/service/firebase/documento_service.dart` (la app
+11. **Código sin usar:** `lib/service/firebase/documento_service.dart` (la app
     lee el catálogo de mockapi, no de Firestore).
 
 ## Privacidad: datos que se recolectan

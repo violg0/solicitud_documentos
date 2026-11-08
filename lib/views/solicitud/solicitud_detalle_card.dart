@@ -8,6 +8,7 @@ import 'package:solicitud_documentos/models/usuario.dart';
 import 'package:solicitud_documentos/repository/motivo_repository.dart';
 import 'package:solicitud_documentos/repository/solicitud_repository.dart';
 import 'package:solicitud_documentos/validators/solicitud_validators.dart';
+import 'package:uuid/uuid.dart';
 
 class SolicitudDetalleCard extends StatefulWidget {
   const SolicitudDetalleCard({
@@ -72,7 +73,7 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
       );
       await widget.motivoRepository.crear(
         Motivo(
-          id: '', // Firestore generates it
+          id: const Uuid().v4(), // único, generado aquí como en Solicitud
           idSolicitud: _solicitud.id,
           mensaje: mensaje,
           estado: nuevo,

@@ -21,6 +21,8 @@ class MotivoRepository {
   }
 
   Future<void> crear(Motivo motivo) async {
+    // Con id vacío cada motivo nuevo pisaría al anterior en la base local.
+    assert(motivo.id.isNotEmpty, 'El motivo necesita un id (UUID) único');
     await local.saveMotivo(motivo); //guarda local primero
     try {
       await remote.guardar(motivo); //intenta subir a Firestore
