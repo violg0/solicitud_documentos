@@ -18,7 +18,7 @@ class Documento {
       id: json['id'],
       nombre: json['nombre'],
       descripcion: json['descripcion'],
-      imagen: json['imagen'],
+      imagen: json['imagen'] ?? '', // la API no siempre envía imagen
       habilitado: json['habilitado'],
     );
   }

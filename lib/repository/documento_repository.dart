@@ -16,7 +16,11 @@ class DocumentoRepository {
       }
       return documentos; 
     } catch (_) {
-      return local.getDocumentos(); 
+      final cacheados = await local.getDocumentos();
+      // Sin red y sin caché no es "catálogo vacío": es un error que la
+      // pantalla debe mostrar con su botón de reintentar.
+      if (cacheados.isEmpty) rethrow;
+      return cacheados;
     }
   }
 

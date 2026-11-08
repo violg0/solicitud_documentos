@@ -24,7 +24,11 @@ class UsuarioService {
   Stream<Usuario?> observar(String uid) => _coleccion
       .doc(uid)
       .snapshots()
-      .map((doc) => doc.data() == null ? null : Usuario.fromJson(doc.data()!));
+      .map(
+        (doc) => doc.data() == null
+            ? null
+            : Usuario.fromJson({...doc.data()!, 'uid': doc.id}),
+      );
 
   Future<Usuario?> obtenerPorId(String id) => _crashService.registrar(() async {
     final doc = await _coleccion.doc(id).get();
