@@ -14,7 +14,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -29,36 +29,39 @@ class AppDatabase extends _$AppDatabase {
           ).get();
           if (existe.isEmpty) await m.createTable(tabla);
         }
-        if (from < 4) {
-          await _agregarColumna(
-            'solicitudes',
-            'observacion_estudiante',
-            "TEXT NOT NULL DEFAULT ''",
-          );
-          await _agregarColumna(
-            'solicitudes',
-            'fecha_creacion',
-            'INTEGER NOT NULL DEFAULT 0',
-          );
-          await _agregarColumna(
-            'solicitudes',
-            'observacion_revision',
-            'TEXT',
-          );
-          await _agregarColumna('solicitudes', 'fecha_entrega', 'INTEGER');
-          await _agregarColumna('solicitudes', 'entregado_por', 'TEXT');
-        }
-        // Agrega las columnas que falten, conservando los datos.
-        await _agregarColumna('solicitudes', 'fecha_modificacion',
-            'INTEGER NOT NULL DEFAULT 0');
-        await _agregarColumna(
-            'solicitudes', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
-        await _agregarColumna('documentos', 'imagen', "TEXT NOT NULL DEFAULT ''");
-        await _agregarColumna(
-            'documentos', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
-        await _agregarColumna(
-            'motivos', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
       }
+      // Agrega las columnas que falten, conservando los datos. Se hace siempre
+      // (y no solo si from < 3) porque _agregarColumna es idempotente: antes
+      // las columnas de la v4 estaban dentro de `from < 3`, así que una base
+      // que ya estaba en v3 quedaba marcada como v4 sin esas columnas y toda
+      // consulta a solicitudes fallaba con "no such column".
+      await _agregarColumna('solicitudes', 'fecha_modificacion',
+          'INTEGER NOT NULL DEFAULT 0');
+      await _agregarColumna(
+          'solicitudes', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
+      await _agregarColumna(
+        'solicitudes',
+        'observacion_estudiante',
+        "TEXT NOT NULL DEFAULT ''",
+      );
+      await _agregarColumna(
+        'solicitudes',
+        'fecha_creacion',
+        'INTEGER NOT NULL DEFAULT 0',
+      );
+      await _agregarColumna('solicitudes', 'observacion_revision', 'TEXT');
+      await _agregarColumna('solicitudes', 'fecha_entrega', 'INTEGER');
+      await _agregarColumna('solicitudes', 'entregado_por', 'TEXT');
+      await _agregarColumna('documentos', 'imagen', "TEXT NOT NULL DEFAULT ''");
+      await _agregarColumna(
+          'documentos', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
+      await _agregarColumna(
+          'motivos', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
+      // Las filas antiguas no tienen fecha de creación: se usa la de modificación.
+      await customStatement(
+        'UPDATE solicitudes SET fecha_creacion = fecha_modificacion '
+        'WHERE fecha_creacion = 0',
+      );
     },
   );
 
