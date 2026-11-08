@@ -12,6 +12,9 @@ import '../repository/solicitud_repository.dart';
 import '../service/firebase/auth_service.dart';
 import 'solicitud/solicitud_detalle_card.dart';
 
+final RouteObserver<ModalRoute<void>> bandejaRouteObserver =
+    RouteObserver<ModalRoute<void>>();
+
 class BandejaSolicitudesScreen extends StatefulWidget {
   const BandejaSolicitudesScreen({
     super.key,
@@ -33,7 +36,8 @@ class BandejaSolicitudesScreen extends StatefulWidget {
       _BandejaSolicitudesScreenState();
 }
 
-class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
+class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen>
+    with RouteAware {
   static const _colores = {
     EstadoSolicitud.solicitada: Colors.blue,
     EstadoSolicitud.enRevision: Colors.orange,
@@ -44,6 +48,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
   };
 
   late Future<(List<Solicitud>, Map<String, Documento>)> _datos = _cargar();
+  bool _estaSuscrita = false;
 
   Future<(List<Solicitud>, Map<String, Documento>)> _cargar() async {
     final r = await Future.wait([
@@ -70,8 +75,53 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
         ),
       ),
     );
-    // Al volver, el estado pudo cambiar: recargamos la bandeja
-    if (mounted) setState(() => _datos = _cargar());
+  }
+
+  void _recargar() {
+    if (mounted) {
+      setState(() {
+        _datos = _cargar();
+      });
+    }
+  }
+
+  Future<void> _cerrarSesion() async {
+    try {
+      await widget.authService.logout();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo cerrar sesión: '
+            '${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (!_estaSuscrita && route != null) {
+      bandejaRouteObserver.subscribe(this, route);
+      _estaSuscrita = true;
+    }
+  }
+
+  @override
+  void didPopNext() {
+    _recargar();
+  }
+
+  @override
+  void dispose() {
+    if (_estaSuscrita) {
+      bandejaRouteObserver.unsubscribe(this);
+    }
+    super.dispose();
   }
 
   @override
@@ -87,7 +137,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout),
-            onPressed: widget.authService.logout,
+            onPressed: _cerrarSesion,
           ),
         ],
       ),
@@ -103,7 +153,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
           final (solicitudes, docs) = snap.data!;
           return RefreshIndicator(
             onRefresh: () async {
-              setState(() => _datos = _cargar());
+              _recargar();
               await _datos;
             },
             child: ListView(

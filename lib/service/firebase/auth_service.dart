@@ -78,7 +78,8 @@ class FirebaseAuthService implements AuthService {
   Future<void> logout() => _auth.signOut();
 
   @override
-  Future<Usuario?> obtenerPerfil(String uid) => _usuarioService.obtenerPorId(uid);
+  Future<Usuario?> obtenerPerfil(String uid) =>
+      _usuarioService.obtenerPorId(uid);
 }
 
 /// Keeps authentication and profiles backed by Firebase.
@@ -137,8 +138,8 @@ class HybridAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
-    _controller.add(null);
     await _firebase?.logout();
+    _controller.add(null);
   }
 
   @override

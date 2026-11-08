@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:solicitud_documentos/views/login/auth_gate.dart';
+import 'package:solicitud_documentos/views/bandeja.dart';
 
 import 'firebase_options.dart';
 import 'local/app_database.dart';
@@ -91,6 +92,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Solicitudes de documentos académicos',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
+      navigatorObservers: [bandejaRouteObserver],
       home: AuthGate(
         authService: authService,
         usuarioService: usuarioService,
