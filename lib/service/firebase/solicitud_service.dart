@@ -34,7 +34,7 @@ class SolicitudService {
     'SolicitudService.obtenerPorId',
   );
 
-  Future<String> guardar(Solicitud solicitud, Documento documento) async {
+  Future<void> guardar(Solicitud solicitud, Documento documento) async {
     final errorHabilitado = SolicitudValidators.validarHabilitado(
       documento.habilitado,
     );
@@ -48,9 +48,8 @@ class SolicitudService {
     }
 
     return _crashService.registrar(() async {
-      final docRef = _coleccion.doc();
+      final docRef = _coleccion.doc(solicitud.id); // id generado en el cliente
       await docRef.set(solicitud.toJson()..remove('id')).timeout(_tiempoMaximo);
-      return docRef.id;
     }, 'SolicitudService.guardar');
   }
 

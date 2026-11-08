@@ -43,7 +43,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen> {
 
   Future<(List<Solicitud>, Map<String, Documento>)> _cargar() async {
     final r = await Future.wait([
-      widget.solicitudRepository.obtenerSolicitudes(),
+      widget.solicitudRepository.obtenerSolicitudes(idUsuario: null),
       widget.documentoRepository.obtenerTodos(),
     ]);
     final docs = {for (final d in r[1] as List<Documento>) d.id: d};

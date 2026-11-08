@@ -5,12 +5,12 @@ import 'dart:async';
 
 import '../../models/documento.dart';
 import '../../models/usuario.dart';
-import '../../service/api/documento_service.dart';
 import '../../service/firebase/auth_service.dart';
 import '../../service/firebase/crash_service.dart';
 import '../../repository/documento_repository.dart';
 import '../../repository/motivo_repository.dart';
 import '../../repository/solicitud_repository.dart';
+import '../crear_solicitud.dart';
 
 
 class CatalogoScreen extends StatefulWidget {
@@ -36,14 +36,13 @@ class CatalogoScreen extends StatefulWidget {
 }
 
 class _CatalogoScreenState extends State<CatalogoScreen> {
-  //variables: servicio y el future del get con 4 reusltados visuales
-  late final DocumentoService _documentoService;
+  //variables: el future del get con 4 reusltados visuales
   late Future<List<Documento>> _futureDocumentos;
 
   // estado reintentar
   void retryDocumentos() {
     setState(() {
-      _futureDocumentos = _documentoService.getDocumentos();
+      _futureDocumentos = widget.documentoRepository.obtenerTodos();
     });
   }
 
@@ -51,10 +50,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   @override
   void initState() {
     super.initState();
-    _documentoService = DocumentoService(
-      'https://6aee1a6ca677fe0fc14fc05f.mockapi.io/documentos',
-    );
-    _futureDocumentos = _documentoService.getDocumentos();
+    _futureDocumentos = widget.documentoRepository.obtenerTodos();
   }
 
   @override
@@ -109,6 +105,18 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 subtitle: Text(doc.descripcion),
                 enabled: doc.habilitado,
                 trailing: doc.habilitado ? null : const Text('No disponible'),
+                onTap: doc.habilitado
+                    ? () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CrearSolicitudScreen(
+                            usuario: widget.usuario,
+                            documento: doc,
+                            solicitudRepository: widget.solicitudRepository,
+                          ),
+                        ),
+                      )
+                    : null,
               );
             },
           );

@@ -14,7 +14,44 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 3) {
+        // Crea las tablas que falten (sin tocar las existentes).
+        for (final TableInfo tabla in [solicitudes, motivos, documentos]) {
+          final existe = await customSelect(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            variables: [Variable.withString(tabla.actualTableName)],
+          ).get();
+          if (existe.isEmpty) await m.createTable(tabla);
+        }
+        // Agrega las columnas que falten, conservando los datos.
+        await _agregarColumna('solicitudes', 'fecha_modificacion',
+            'INTEGER NOT NULL DEFAULT 0');
+        await _agregarColumna(
+            'solicitudes', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
+        await _agregarColumna('documentos', 'imagen', "TEXT NOT NULL DEFAULT ''");
+        await _agregarColumna(
+            'documentos', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
+        await _agregarColumna(
+            'motivos', 'pending_sync', 'INTEGER NOT NULL DEFAULT 1');
+      }
+    },
+  );
+
+  Future<void> _agregarColumna(
+    String tabla,
+    String columna,
+    String definicion,
+  ) async {
+    final columnas = await customSelect('PRAGMA table_info($tabla)').get();
+    if (columnas.any((c) => c.read<String>('name') == columna)) return;
+    await customStatement('ALTER TABLE $tabla ADD COLUMN $columna $definicion');
+  }
 }
 
 LazyDatabase _openConnection() {

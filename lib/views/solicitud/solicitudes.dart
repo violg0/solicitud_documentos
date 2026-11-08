@@ -60,12 +60,17 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   void initState() {
     super.initState();
     cargarFiltro();
-    _futureSolicitudes = widget.solicitudRepository.obtenerSolicitudes();
+    unawaited(widget.solicitudRepository.syncPending());
+    _futureSolicitudes = widget.solicitudRepository.obtenerSolicitudes(
+      idUsuario: widget.usuario.uid,
+    );
   }
 
   void retrySolicitudes() {
     setState(() {
-      _futureSolicitudes = widget.solicitudRepository.obtenerSolicitudes();
+      _futureSolicitudes = widget.solicitudRepository.obtenerSolicitudes(
+        idUsuario: widget.usuario.uid,
+      );
     });
   }
 

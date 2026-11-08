@@ -35,15 +35,16 @@ Future<void> main() async {
   final authService = FirebaseAuthService(usuarioService);
 
   final db = AppDatabase();
-  final solicitudRepository = SolicitudRepository(
-    local: SolicitudLocalDataSource(db),
-    remote: SolicitudService(crashService: crashService),
-  );
   final documentoRepository = DocumentoRepository(
     local: DocumentoLocalDataSource(db),
     remote: DocumentoService(
       'https://6aee1a6ca677fe0fc14fc05f.mockapi.io/documentos',
     ),
+  );
+  final solicitudRepository = SolicitudRepository(
+    local: SolicitudLocalDataSource(db),
+    remote: SolicitudService(crashService: crashService),
+    documentoRepository: documentoRepository,
   );
   final motivoRepository = MotivoRepository(
     local: MotivoLocalDataSource(db),
