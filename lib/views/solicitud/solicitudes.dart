@@ -99,7 +99,11 @@ class _SolicitudesScreenState extends State<SolicitudesScreen> {
   }
 
   void retrySolicitudes() {
-    setState(() => _futureDatos = _cargarDatos());
+    // Con cuerpo de bloque: la flecha `=> x = f()` devuelve el Future y Flutter
+    // lanza "setState() callback argument returned a Future".
+    setState(() {
+      _futureDatos = _cargarDatos();
+    });
   }
 
   /// Abre el detalle de solo lectura. Desde ahí, si la solicitud es propia y

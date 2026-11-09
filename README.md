@@ -314,6 +314,7 @@ catálogo y con los motivos (historial).
     tres puntos de la barra superior: "Log non-fatal" y "Force fatal crash")
     para poder generar la evidencia con el APK entregado; en una app real se
     quitaría.
+13. El indicador de “pendiente” puede no reflejar la realidad. Firestore tiene su propia caché offline y puede sincronizar una escritura por su cuenta al recuperar conexión, antes de que la app reintente explícitamente. El dato no se pierde, pero el reloj naranja de “Pendiente de sincronizar” podría seguir mostrándose aunque ya haya llegado al servidor.
 
 ## Privacidad: datos que se recolectan
 

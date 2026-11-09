@@ -44,7 +44,7 @@ class SolicitudRepository {
         // toUtc() al leer), así que la comparación no depende de la zona.
         if (local == null ||
             !local.fechaModificacion.toUtc().isAfter(
-              s.fechaModificacion.toUtc(),
+              s.fechaModificacion.toUtc(), //¿mi copia local NO es más nueva que la de Firestore
             )) {
           await this.local.saveSolicitud(s);
           await this.local.markSynced(s.id);
