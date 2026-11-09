@@ -101,6 +101,10 @@ class SolicitudRepository {
     });
   }
 
+  // Toma todas las solicitudes pendientes de subir, e intenta subirlas una por
+  //una al servidor, a la que logra subir, la marca como sincronizada; a la que falla,
+  // la deja pendiente para reintentar después.
+
   Future<void> _syncPending(String? idUsuario) async {
     final pending = await local.getPendingSolicitudes(idUsuario: idUsuario);
     for (final solicitud in pending) {
