@@ -27,7 +27,7 @@ firebase emulators:exec --only firestore --project demo-solicitudes "node test.j
 ```
 
 La primera vez, la CLI descarga el emulador de Firestore (unos 60 MB).
-Al terminar debe verse `Resultado: 77 ok, 0 fallos`; si alguna regla se rompe,
+Al terminar debe verse `Resultado: 125 ok, 0 fallos`; si alguna regla se rompe,
 el comando sale con código 1 y marca la prueba con `FAIL`.
 
 Para probar otro archivo de reglas: `RULES_PATH=ruta/al/archivo.rules npm test`.
@@ -36,9 +36,11 @@ Para probar otro archivo de reglas: `RULES_PATH=ruta/al/archivo.rules npm test`.
 
 | Colección | Casos |
 |---|---|
-| `Usuarios` | Solo se crea el propio perfil y siempre con rol `estudiante`; no se puede auto-asignar `revisor`/`secretaria`, ni escalar el rol después, ni leer perfiles ajenos |
+| `Usuarios` | Solo se crea el propio perfil y siempre con rol `estudiante`; no se puede auto-asignar `revisor`/`secretaria`, ni escalar el rol después. Cada usuario lee solo el suyo; revisor y secretaria leen cualquiera (para mostrar el nombre del solicitante) pero no escriben ninguno |
 | `Documentos` | Lectura para autenticados; escritura denegada a todos |
 | `Solicitudes` | El estudiante crea y lee solo las suyas (siempre en estado `solicitada`); no puede listar toda la colección; revisor y secretaria leen todas y cambian solo `estado` y `fechaModificacion`; el estudiante solo puede cancelar la suya (`solicitada` → `cancelada`) y no puede aprobar, rechazar ni tocar otra cosa; nadie borra |
+| Máquina de estados | Matriz de las 36 combinaciones estado → estado para cada rol (revisor, secretaria y estudiante dueño): solo se permiten `solicitada` → `enRevision`, `enRevision` → `aprobada`/`rechazada` (revisor), `aprobada` → `entregada` (secretaria) y `solicitada` → `cancelada` (estudiante). `entregada`, `rechazada` y `cancelada` son finales: no se entrega dos veces, ni "re-entrega" tocando solo la fecha, ni se reabre; el reintento de creación no pisa una revisión posterior |
+| Observación y entrega | El revisor puede escribir `observacionRevision` solo al aprobar o rechazar (y debe ser texto); la secretaria solo puede entregar registrando `fechaEntrega` y `entregadoPor` con su propio uid; ningún rol escribe campos de otra transición ni cambia otros campos; la cancelación del estudiante no admite ninguno de ellos. Se prueba con documentos "reales" (campos opcionales en `null`) |
 | `Motivos` | Revisor y secretaria crean; el estudiante solo crea el motivo de la cancelación de su propia solicitud (también dentro de un mismo batch); lectura para el dueño de la solicitud, revisor y secretaria; sin edición ni borrado |
 
 Las pruebas que esperan un rechazo (`PERMISSION_DENIED`) imprimen en pantalla

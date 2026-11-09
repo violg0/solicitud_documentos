@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:solicitud_documentos/repository/solicitud_repository.dart';
 
-import '../models/documento.dart';
-import '../models/estados.dart';
-import '../models/periodos_academicos.dart';
-import '../models/solicitud.dart';
-import '../models/usuario.dart';
+import '../../models/documento.dart';
+import '../../models/estados.dart';
+import '../../models/periodos_academicos.dart';
+import '../../models/solicitud.dart';
+import '../../models/usuario.dart';
 
 class CrearSolicitudScreen extends StatefulWidget {
   final SolicitudRepository solicitudRepository;
@@ -45,6 +45,7 @@ class _CrearSolicitudScreenState extends State<CrearSolicitudScreen> {
 
     setState(() => _enviando = true);
 
+    final ahora = DateTime.now().toUtc(); // una sola hora, en UTC
     final solicitud = Solicitud(
       id: const Uuid().v4(),
       idUsuario: widget.usuario.uid,
@@ -52,8 +53,8 @@ class _CrearSolicitudScreenState extends State<CrearSolicitudScreen> {
       periodo: periodoSeleccionado!,
       observacionEstudiante: _observacion.text.trim(),
       estado: EstadoSolicitud.solicitada,
-      fechaCreacion: DateTime.now(),
-      fechaModificacion: DateTime.now(),
+      fechaCreacion: ahora,
+      fechaModificacion: ahora,
     );
 
     try {
@@ -92,7 +93,7 @@ class _CrearSolicitudScreenState extends State<CrearSolicitudScreen> {
               onChanged: (value) => setState(() => periodoSeleccionado = value),
             ),
             const SizedBox(height: 16),
-            TextField(
+            TextFormField(
               controller: _observacion,
               maxLines: 3,
               decoration: const InputDecoration(

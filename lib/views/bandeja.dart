@@ -10,6 +10,7 @@ import '../repository/documento_repository.dart'; // ajusta rutas
 import '../repository/motivo_repository.dart';
 import '../repository/solicitud_repository.dart';
 import '../service/firebase/auth_service.dart';
+import '../service/firebase/usuario_service.dart';
 import 'solicitud/solicitud_detalle_card.dart';
 
 final RouteObserver<ModalRoute<void>> bandejaRouteObserver =
@@ -23,6 +24,7 @@ class BandejaSolicitudesScreen extends StatefulWidget {
     required this.solicitudRepository,
     required this.documentoRepository,
     required this.motivoRepository,
+    this.usuarioService,
   });
 
   final Usuario usuario;
@@ -30,6 +32,7 @@ class BandejaSolicitudesScreen extends StatefulWidget {
   final SolicitudRepository solicitudRepository;
   final DocumentoRepository documentoRepository;
   final MotivoRepository motivoRepository;
+  final UsuarioService? usuarioService; // nombre del solicitante en el detalle
 
   @override
   State<BandejaSolicitudesScreen> createState() =>
@@ -71,6 +74,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen>
             usuario: widget.usuario,
             solicitudRepository: widget.solicitudRepository,
             motivoRepository: widget.motivoRepository,
+            usuarioService: widget.usuarioService,
           ),
         ),
       ),
@@ -190,7 +194,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen>
           ),
         ),
         title: Text(
-          estado.name,
+          estado.etiqueta,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         children: [
@@ -205,7 +209,7 @@ class _BandejaSolicitudesScreenState extends State<BandejaSolicitudesScreen>
                 ),
                 subtitle: Text(
                   'Período ${s.periodo}\n'
-                  '${s.fechaModificacion.toString().substring(0, 16)}',
+                  '${s.fechaModificacion.toLocal().toString().substring(0, 16)}',
                 ),
                 isThreeLine: true,
                 trailing: const Icon(Icons.chevron_right),

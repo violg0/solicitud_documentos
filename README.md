@@ -30,7 +30,7 @@ roles `revisor` y `secretaria` solo se asignan a mano (ver
 
 | Rol | Qué puede hacer en la app |
 |---|---|
-| **estudiante** | Ver el catálogo, crear solicitudes de documentos habilitados (eligiendo período) y ver **sus** solicitudes en "Mis solicitudes", donde puede filtrarlas por estado. Mientras una solicitud está `solicitada` puede cancelarla tocándola (la app pide un motivo). |
+| **estudiante** | Ver el catálogo, crear solicitudes de documentos habilitados (eligiendo período) y ver **sus** solicitudes en "Mis solicitudes", donde puede filtrarlas por estado y ver cuáles siguen pendientes de sincronizar. Al tocar una abre su **detalle** (todos los campos e historial); mientras esté `solicitada` puede cancelarla desde ahí (la app pide un motivo). |
 | **revisor** | Abrir la **Bandeja** (todas las solicitudes agrupadas por estado), pasar `solicitada → enRevision` y decidir `enRevision → aprobada` o `rechazada`, con un mensaje en cada cambio. |
 | **secretaria** | Abrir la **Bandeja** y marcar `aprobada → entregada`. |
 
@@ -84,7 +84,7 @@ firebase deploy --only firestore:rules --project solicitudes-documentos
 ```
 
 Se verifican con una suite automatizada contra el emulador local de Firestore
-(77 casos) que **no** toca datos reales:
+(125 casos) que **no** toca datos reales:
 
 ```bash
 cd firestore-tests
@@ -162,8 +162,22 @@ Los nombres corresponden a las clases de `lib/models/`.
 | `idDocumento` | String | Id del documento en mockapi |
 | `idUsuario` | String | uid del estudiante dueño |
 | `periodo` | String | Uno de `2025-1`, `2025-2`, `2026-1`, `2026-2` |
+| `observacionEstudiante` | String | Texto opcional que escribe el estudiante al crearla (vacío si no escribe nada) |
 | `estado` | `EstadoSolicitud` | Ver abajo |
-| `fechaModificacion` | DateTime | |
+| `fechaCreacion` | DateTime (UTC) | Se fija al crearla en el dispositivo |
+| `fechaModificacion` | DateTime (UTC) | Se actualiza en cada cambio de estado |
+| `observacionRevision` | String? | Mensaje del revisor al aprobar o rechazar (si lo escribe); `null` mientras tanto |
+| `fechaEntrega` | DateTime? (UTC) | La escribe la secretaria al entregar; `null` antes |
+| `entregadoPor` | String? | uid de la secretaria que entregó; `null` antes |
+
+**Fechas.** Todas se guardan y se envían en **UTC** (cadenas ISO 8601 con `Z`
+al final) y se muestran en la hora del dispositivo. Comparar local contra
+Firestore para decidir qué copia se muestra no depende de la zona horaria.
+
+`observacionRevision`, `fechaEntrega` y `entregadoPor` **sí se suben a
+Firestore** (en la misma escritura que cambia el estado) y las reglas solo los
+aceptan en su transición: la observación al aprobar/rechazar; la fecha y el uid
+al entregar (y el uid debe ser el de quien escribe).
 
 ### Motivo — Firestore `Motivos/{id}` y SQLite
 
@@ -219,8 +233,14 @@ además el servidor aplica las suyas en `firestore.rules`:
 - `Documentos`: lectura para autenticados, sin escritura desde el cliente.
 - `Solicitudes`: el estudiante crea y lee solo las suyas (en `solicitada`);
   puede cancelar la suya (`solicitada → cancelada`) pero ningún otro cambio de
-  estado; revisor y secretaria leen todas y modifican solo `estado` y
-  `fechaModificacion`; nadie borra.
+  estado; revisor y secretaria leen todas y modifican solo `estado`,
+  `fechaModificacion` y los campos propios de cada transición
+  (`observacionRevision` al aprobar/rechazar; `fechaEntrega` y `entregadoPor`
+  al entregar), y **el servidor exige la misma máquina de estados de la
+  tabla de arriba**: cada transición solo la puede hacer su rol, y
+  `entregada`, `rechazada` y `cancelada` son finales (no se puede entregar dos
+  veces ni reabrir una solicitud cerrada, aunque la pantalla esté
+  desactualizada); nadie borra.
 - `Motivos`: los crean revisor y secretaria, y el estudiante únicamente el de
   la cancelación de su solicitud; leen el dueño de la solicitud, el revisor y la
   secretaria; sin edición ni borrado.
@@ -258,37 +278,42 @@ catálogo y con los motivos (historial).
    (`if (documento == null) continue;`): queda con `pendingSync = true` para
    siempre, se reintenta en cada apertura de "Mis solicitudes" y nunca se avisa
    al usuario ni se sube.
-2. **Una solicitud pendiente puede no verse en "Mis solicitudes".** Si la lectura
-   de Firestore responde (también puede hacerlo desde la caché propia del SDK
-   estando sin conexión), la lista muestra solo ese resultado y deja fuera las
-   solicitudes que siguen pendientes en el SQLite local. La solicitud no se
-   pierde: aparece cuando se sincroniza.
+2. **La sincronización de pendientes solo se reintenta al abrir "Mis
+   solicitudes".** Una solicitud guardada sin conexión aparece en la lista con
+   el aviso "Pendiente de sincronizar" (reloj naranja) y sube sola la próxima
+   vez que se abre esa pantalla con red; no hay un reintento periódico en
+   segundo plano.
 3. **El cambio de estado necesita conexión.** `cambiarEstado` escribe directo en
    Firestore; sin red falla a los 10 s con un mensaje de error (la escritura
-   puede quedar encolada por el propio SDK de Firestore). Tampoco actualiza la
-   copia local, que se pone al día en la siguiente lectura online.
-4. **Cancelar una solicitud que aún no se sincronizó falla con el error crudo.**
-   Si el estudiante cancela una solicitud que sigue pendiente en el SQLite local
-   y todavía no existe en Firestore, la actualización del estado falla y la app
-   muestra en un aviso el texto técnico del error del servidor, sin un mensaje
-   amigable. Funciona al reintentar cuando la solicitud ya se sincronizó.
+   puede quedar encolada por el propio SDK de Firestore). Cuando sí se aplica,
+   la copia local se actualiza al instante.
+4. **Cancelar una solicitud que aún no se sincronizó no se puede.** Si el
+   estudiante pulsa "Cancelar solicitud" en el detalle de una solicitud
+   pendiente (todavía no existe en Firestore), la app avisa que aún no se
+   sincronizó y que lo intente de nuevo. Funciona cuando ya subió.
 5. **Los motivos no se reintentan.** Se guardan primero en SQLite y luego se
    suben a Firestore; si la subida falla, no hay reintento: la columna
    `pendingSync` de motivos y documentos existe pero nada la lee.
-6. **El servidor no impone el orden de estados a revisor y secretaria.** Las
-   reglas les permiten cambiar `estado` a cualquier valor; la secuencia válida
-   solo se exige en la app.
-7. **Sin recuperación de contraseña ni verificación de correo.**
-8. **El APK `release` se firma con la llave de debug** (configuración por
+6. **Sin recuperación de contraseña ni verificación de correo.**
+7. **El APK `release` se firma con la llave de debug** (configuración por
    defecto del proyecto en `android/app/build.gradle.kts`); sirve para la
    entrega y pruebas, no para publicar en una tienda.
-9. **El catálogo depende de un servicio de terceros** (mockapi.io, plan gratuito)
+8. **El catálogo depende de un servicio de terceros** (mockapi.io, plan gratuito)
    sin autenticación ni garantía de disponibilidad.
-10. **Pruebas automáticas limitadas.** Hay 77 pruebas de las reglas de Firestore
-    (`firestore-tests/`), pero la app solo tiene un test de ejemplo; la
-    verificación de la interfaz es manual (ver [`QA.md`](QA.md)).
-11. **Código sin usar:** `lib/service/firebase/documento_service.dart` (la app
+9. **Pruebas automáticas limitadas.** Hay 125 pruebas de las reglas de Firestore
+   (`firestore-tests/`) y 6 pruebas de Dart (`flutter test`: aislamiento de
+   Drift por cuenta y fechas en UTC); la verificación de la interfaz es manual
+   (ver [`QA.md`](QA.md)).
+10. **Código sin usar:** `lib/service/firebase/documento_service.dart` (la app
     lee el catálogo de mockapi, no de Firestore).
+11. **Una solicitud sin sincronizar sobrevive al cierre de sesión.** Al cerrar
+    sesión la app intenta subir lo pendiente (hasta 8 s) y borra la copia
+    local; lo que no logró subir se conserva para no perderlo, aislado por
+    cuenta: solo su dueño lo ve y lo sube al volver a entrar.
+12. **El menú "QA" de Crashlytics está también en el APK release** (ícono de
+    tres puntos de la barra superior: "Log non-fatal" y "Force fatal crash")
+    para poder generar la evidencia con el APK entregado; en una app real se
+    quitaría.
 
 ## Privacidad: datos que se recolectan
 
@@ -296,7 +321,7 @@ catálogo y con los motivos (historial).
 |---|---|---|
 | Correo y contraseña | Crear la cuenta e iniciar sesión | Firebase Authentication. La contraseña la gestiona Firebase; la app no la almacena |
 | Nombre, correo, rol y uid | Identificar al usuario y decidir qué puede hacer | Firestore (`Usuarios`) |
-| Solicitudes: documento, período, estado, fechas y uid del dueño | Gestionar el trámite | Firestore (`Solicitudes`) y copia en SQLite del dispositivo |
+| Solicitudes: documento, período, observaciones, estado, fechas y uid del dueño, y uid de quien entrega | Gestionar el trámite | Firestore (`Solicitudes`) y copia en SQLite del dispositivo |
 | Mensajes de cambio de estado | Historial de cada solicitud | Firestore (`Motivos`) y SQLite |
 | Informes de fallos (Crashlytics): traza del error, datos técnicos del dispositivo y el uid del usuario | Detectar y corregir errores | Firebase Crashlytics |
 | Filtro de solicitudes elegido | Recordar una preferencia | `SharedPreferences` (solo en el dispositivo) |
@@ -306,7 +331,10 @@ catálogo y con los motivos (historial).
 - La app **no** pide ubicación, contactos, cámara ni micrófono, y no incluye
   publicidad ni analítica de comportamiento.
 - La consulta al catálogo (mockapi) no envía ningún dato del usuario.
-- Cerrar sesión no borra la copia local de SQLite del dispositivo.
+- Cada cuenta solo ve su copia local: las consultas a SQLite filtran por el uid
+  del usuario. Al cerrar sesión se borra la copia local de solicitudes ya
+  sincronizadas y todos los motivos del dispositivo (ver limitación 11 para las
+  pendientes).
 
 ## Estructura del proyecto
 

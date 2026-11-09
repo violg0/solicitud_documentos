@@ -21,7 +21,7 @@ class Motivo {
       idSolicitud: json['idSolicitud'],
       mensaje: json['mensaje'],
       estado: EstadoSolicitud.values.byName(json['estado']),
-      fechaCreacion: DateTime.parse(json['fechaCreacion']),
+      fechaCreacion: DateTime.parse(json['fechaCreacion']).toUtc(),
     );
   }
 
@@ -31,7 +31,7 @@ class Motivo {
       'idSolicitud': idSolicitud,
       'mensaje': mensaje,
       'estado': estado.name,
-      'fechaCreacion': fechaCreacion.toIso8601String(),
+      'fechaCreacion': fechaCreacion.toUtc().toIso8601String(), // con "Z"
     };
   }
 }

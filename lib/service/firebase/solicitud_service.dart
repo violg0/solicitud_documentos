@@ -61,11 +61,21 @@ class SolicitudService {
     }, 'SolicitudService.guardar');
   }
 
-  Future<void> cambiarEstado(
+  /// Cambia el estado en Firestore y devuelve la solicitud como quedó.
+  ///
+  /// Además de `estado` y `fechaModificacion` escribe, según la transición:
+  /// - aprobada / rechazada: `observacionRevision` (el mensaje del revisor,
+  ///   si lo escribió);
+  /// - entregada: `fechaEntrega` y `entregadoPor` (la secretaria que entrega).
+  /// Las fechas van en UTC (con "Z"). Las reglas de Firestore aceptan
+  /// exactamente estos campos para cada transición.
+  Future<Solicitud> cambiarEstado(
     Solicitud solicitud,
     EstadoSolicitud nuevo,
-    Usuario usuario,
-  ) async {
+    Usuario usuario, {
+    String? observacion,
+    DateTime? fecha,
+  }) async {
     final error = SolicitudValidators.validarCambioEstado(
       solicitud,
       nuevo,
@@ -75,15 +85,45 @@ class SolicitudService {
       throw Exception(error);
     }
 
+    final ahora = (fecha ?? DateTime.now()).toUtc();
+    final texto = observacion?.trim();
+    final conObservacion =
+        (nuevo == EstadoSolicitud.aprobada ||
+            nuevo == EstadoSolicitud.rechazada) &&
+        texto != null &&
+        texto.isNotEmpty;
+    final entrega = nuevo == EstadoSolicitud.entregada;
+
+    final cambios = <String, dynamic>{
+      'estado': nuevo.name,
+      'fechaModificacion': ahora.toIso8601String(),
+      if (conObservacion) 'observacionRevision': texto,
+      if (entrega) 'fechaEntrega': ahora.toIso8601String(),
+      if (entrega) 'entregadoPor': usuario.uid,
+    };
+
     await _crashService.registrar(
       () => _coleccion
           .doc(solicitud.id)
-          .update({
-            'estado': nuevo.name,
-            'fechaModificacion': DateTime.now().toIso8601String(),
-          })
+          .update(cambios)
           .timeout(_tiempoMaximo),
       'SolicitudService.cambiarEstado',
+    );
+
+    return Solicitud(
+      id: solicitud.id,
+      idDocumento: solicitud.idDocumento,
+      idUsuario: solicitud.idUsuario,
+      periodo: solicitud.periodo,
+      observacionEstudiante: solicitud.observacionEstudiante,
+      estado: nuevo,
+      fechaCreacion: solicitud.fechaCreacion,
+      fechaModificacion: ahora,
+      observacionRevision: conObservacion
+          ? texto
+          : solicitud.observacionRevision,
+      fechaEntrega: entrega ? ahora : solicitud.fechaEntrega,
+      entregadoPor: entrega ? usuario.uid : solicitud.entregadoPor,
     );
   }
 

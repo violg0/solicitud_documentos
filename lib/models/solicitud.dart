@@ -37,12 +37,12 @@ class Solicitud {
       estado: EstadoSolicitud.values.byName(json['estado']),
       fechaCreacion: DateTime.parse(
         json['fechaCreacion'] ?? json['fechaModificacion'],
-      ),
-      fechaModificacion: DateTime.parse(json['fechaModificacion']),
+      ).toUtc(),
+      fechaModificacion: DateTime.parse(json['fechaModificacion']).toUtc(),
       observacionRevision: json['observacionRevision'],
       fechaEntrega: json['fechaEntrega'] == null
           ? null
-          : DateTime.parse(json['fechaEntrega']),
+          : DateTime.parse(json['fechaEntrega']).toUtc(),
       entregadoPor: json['entregadoPor'],
     );
   }
@@ -55,10 +55,11 @@ class Solicitud {
       'periodo': periodo,
       'observacionEstudiante': observacionEstudiante,
       'estado': estado.name,
-      'fechaCreacion': fechaCreacion.toIso8601String(),
-      'fechaModificacion': fechaModificacion.toIso8601String(),
+      // Siempre en UTC: toIso8601String() de un DateTime UTC termina en "Z".
+      'fechaCreacion': fechaCreacion.toUtc().toIso8601String(),
+      'fechaModificacion': fechaModificacion.toUtc().toIso8601String(),
       'observacionRevision': observacionRevision,
-      'fechaEntrega': fechaEntrega?.toIso8601String(),
+      'fechaEntrega': fechaEntrega?.toUtc().toIso8601String(),
       'entregadoPor': entregadoPor,
     };
   }

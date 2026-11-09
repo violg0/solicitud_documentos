@@ -39,10 +39,53 @@ service cloud.firestore {
         && (perfil().rol == 'revisor' || perfil().rol == 'secretaria');
     }
 
+    // Máquina de estados que impone el servidor (la misma de SolicitudValidators):
+    //   solicitada -> enRevision                 (revisor)
+    //   enRevision -> aprobada | rechazada       (revisor)
+    //   aprobada   -> entregada                  (secretaria)
+    //   solicitada -> cancelada                  (estudiante dueño; ver más abajo)
+    // entregada, rechazada y cancelada son estados finales: de ahí no sale
+    // ninguna transición, ni siquiera "entregada -> entregada".
+    function transicionValida(actual, nuevo, rol) {
+      return (actual == 'solicitada' && nuevo == 'enRevision' && rol == 'revisor')
+        || (actual == 'enRevision' && (nuevo == 'aprobada' || nuevo == 'rechazada')
+            && rol == 'revisor')
+        || (actual == 'aprobada' && nuevo == 'entregada' && rol == 'secretaria');
+    }
+
+    // Campos que puede escribir cada transición (además se exige que el campo
+    // cambiado sea de ese conjunto y nada más):
+    //   * aprobada / rechazada -> estado, fechaModificacion y la
+    //                             observacionRevision del revisor;
+    //   * entregada            -> estado, fechaModificacion, fechaEntrega y
+    //                             entregadoPor (datos de la entrega);
+    //   * enRevision           -> solo estado y fechaModificacion.
+    function camposDeTransicion(nuevo) {
+      return nuevo == 'entregada'
+        ? ['estado', 'fechaModificacion', 'fechaEntrega', 'entregadoPor']
+        : ((nuevo == 'aprobada' || nuevo == 'rechazada')
+            ? ['estado', 'fechaModificacion', 'observacionRevision']
+            : ['estado', 'fechaModificacion']);
+    }
+
+    // Entregar exige dejar registrado quién (el propio uid, no el de otro) y
+    // cuándo. La observación de revisión, si viene, debe ser texto.
+    function datosDeCambioValidos(nuevo) {
+      return (nuevo != 'entregada'
+          || (request.resource.data.entregadoPor == request.auth.uid
+              && request.resource.data.fechaEntrega is string))
+        && (!request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['observacionRevision'])
+            || request.resource.data.observacionRevision is string);
+    }
+
     // ---------- Usuarios ----------
     match /Usuarios/{userId} {
-      // Solo el propio perfil.
-      allow read: if autenticado() && request.auth.uid == userId;
+      // El propio perfil; revisor y secretaria pueden leer cualquiera (la app
+      // muestra el nombre del solicitante en vez del uid). Solo lectura: la
+      // escritura sigue cerrada abajo.
+      allow read: if autenticado()
+        && (request.auth.uid == userId || esPrivilegiado());
 
       // Autorregistro: el id del documento es el uid propio y el rol enviado
       // es SIEMPRE 'estudiante'. Sin esto cualquiera podría llamar a la API
@@ -79,10 +122,16 @@ service cloud.firestore {
               'observacionRevision', 'fechaEntrega', 'entregadoPor']);
 
       allow update: if
-        // Revisor/secretaria: solo pueden tocar estado y fechaModificacion.
+        // Revisor/secretaria: el cambio de estado debe ser una transición
+        // válida para su rol y solo puede tocar los campos de esa transición
+        // (ver camposDeTransicion). Así una pantalla desactualizada o un doble
+        // toque no puede entregar dos veces ni reabrir una solicitud cerrada.
         (esPrivilegiado()
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['estado', 'fechaModificacion']))
+               .hasOnly(camposDeTransicion(request.resource.data.estado))
+          && transicionValida(resource.data.estado, request.resource.data.estado,
+                              perfil().rol)
+          && datosDeCambioValidos(request.resource.data.estado))
         // El dueño solo puede reenviar la solicitud idéntica (la app reintenta
         // el guardado offline con set()). Cualquier otro cambio se rechaza.
         || (esEstudiante()

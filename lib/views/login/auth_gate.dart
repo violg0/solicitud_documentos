@@ -53,6 +53,7 @@ class AuthGate extends StatelessWidget {
           solicitudRepository: solicitudRepository,
           documentoRepository: documentoRepository,
           motivoRepository: motivoRepository,
+          usuarioService: usuarioService,
         );
       },
     );
@@ -67,7 +68,10 @@ class _PerfilGate extends StatefulWidget {
     required this.solicitudRepository,
     required this.documentoRepository,
     required this.motivoRepository,
+    required this.usuarioService,
   });
+
+  final UsuarioService usuarioService;
 
   final AuthService authService;
   final String uid;
@@ -151,6 +155,7 @@ class _PerfilGateState extends State<_PerfilGate> {
             solicitudRepository: widget.solicitudRepository,
             documentoRepository: widget.documentoRepository,
             motivoRepository: widget.motivoRepository,
+            usuarioService: widget.usuarioService,
           );
         }
         return CatalogoScreen(

@@ -84,12 +84,17 @@ class FirebaseAuthService implements AuthService {
 
 /// Keeps authentication and profiles backed by Firebase.
 class HybridAuthService implements AuthService {
-  HybridAuthService({this._firebase}) {
+  HybridAuthService({this._firebase, this.beforeLogout}) {
     _firebaseSubscription = _firebase?.authStateChanges().listen((user) {
       _firebaseUser = user;
       _controller.add(user);
     });
   }
+
+  /// Se ejecuta con el uid de la cuenta *antes* de cerrar la sesión; sirve
+  /// para limpiar los datos locales de esa cuenta. Si falla, el cierre de
+  /// sesión continúa igual.
+  final Future<void> Function(String? uid)? beforeLogout;
 
   final FirebaseAuthService? _firebase;
   final _controller = StreamController<AppAuthUser?>.broadcast();
@@ -138,6 +143,11 @@ class HybridAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
+    try {
+      await beforeLogout?.call(_firebaseUser?.uid);
+    } catch (_) {
+      // Limpiar el caché local nunca debe impedir cerrar sesión.
+    }
     await _firebase?.logout();
     _controller.add(null);
   }

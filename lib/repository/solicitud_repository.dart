@@ -32,14 +32,20 @@ class SolicitudRepository {
     try {
       final solicitudes = await remote.listar(idUsuario: idUsuario);
       final locales = {
-        for (final solicitud in await local.getSolicitudes()) solicitud.id:
-            solicitud,
+        for (final solicitud in await local.getSolicitudes(
+          idUsuario: idUsuario,
+        ))
+          solicitud.id: solicitud,
       };
       final reconciliadas = <Solicitud>[];
       for (final s in solicitudes) {
         final local = locales[s.id];
+        // Ambas fechas son instantes en UTC (los modelos las normalizan con
+        // toUtc() al leer), así que la comparación no depende de la zona.
         if (local == null ||
-            !local.fechaModificacion.isAfter(s.fechaModificacion)) {
+            !local.fechaModificacion.toUtc().isAfter(
+              s.fechaModificacion.toUtc(),
+            )) {
           await this.local.saveSolicitud(s);
           await this.local.markSynced(s.id);
           reconciliadas.add(s);
@@ -57,11 +63,14 @@ class SolicitudRepository {
       );
       return reconciliadas;
     } catch (_) {
-      return (await local.getSolicitudes())
-          .where((s) => idUsuario == null || s.idUsuario == idUsuario)
-          .toList();
+      return local.getSolicitudes(idUsuario: idUsuario);
     }
   }
+
+  /// Ids de las solicitudes que siguen pendientes de subir a Firestore
+  /// (`pendingSync = true` en Drift).
+  Future<Set<String>> idsPendientes({required String? idUsuario}) =>
+      local.getIdsPendientes(idUsuario: idUsuario);
 
   Future<void> crearSolicitud(Solicitud solicitud, Documento documento) async {
     final error =
@@ -72,27 +81,28 @@ class SolicitudRepository {
     }
     await local.saveSolicitud(solicitud);
     // Firestore puede esperar indefinidamente sin red. La UI confirma SQLite.
-    unawaited(_syncAfterSave());
+    unawaited(_syncAfterSave(solicitud.idUsuario));
   }
 
-  Future<void> _syncAfterSave() async {
+  Future<void> _syncAfterSave(String idUsuario) async {
     try {
       final active = _syncInProgress;
       if (active != null) await active;
-      await syncPending();
+      await syncPending(idUsuario: idUsuario);
     } catch (_) {
       // El guardado local ya terminó; se puede reintentar después.
     }
   }
 
-  Future<void> syncPending() {
-    return _syncInProgress ??= _syncPending().whenComplete(() {
+  /// Sube las pendientes de [idUsuario] (de todas las cuentas si es null).
+  Future<void> syncPending({String? idUsuario}) {
+    return _syncInProgress ??= _syncPending(idUsuario).whenComplete(() {
       _syncInProgress = null;
     });
   }
 
-  Future<void> _syncPending() async {
-    final pending = await local.getPendingSolicitudes();
+  Future<void> _syncPending(String? idUsuario) async {
+    final pending = await local.getPendingSolicitudes(idUsuario: idUsuario);
     for (final solicitud in pending) {
       try {
         final documento = await documentoRepository.obtenerPorId(
@@ -107,30 +117,27 @@ class SolicitudRepository {
     }
   }
 
-  Future<void> cambiarEstado(
+  /// [observacion] es el mensaje de quien cambia el estado: si el revisor
+  /// aprueba o rechaza, queda como `observacionRevision`. Devuelve la
+  /// solicitud ya actualizada (la misma que queda en Firestore y en Drift).
+  Future<Solicitud> cambiarEstado(
     Solicitud solicitud,
     EstadoSolicitud nuevo,
-    Usuario usuario,
-  ) async {
-    await remote.cambiarEstado(solicitud, nuevo, usuario);
-    final actualizada = Solicitud(
-      id: solicitud.id,
-      idDocumento: solicitud.idDocumento,
-      idUsuario: solicitud.idUsuario,
-      periodo: solicitud.periodo,
-      observacionEstudiante: solicitud.observacionEstudiante,
-      estado: nuevo,
-      fechaCreacion: solicitud.fechaCreacion,
-      fechaModificacion: DateTime.now(),
-      observacionRevision: solicitud.observacionRevision,
-      fechaEntrega: nuevo == EstadoSolicitud.entregada
-          ? DateTime.now()
-          : solicitud.fechaEntrega,
-      entregadoPor: nuevo == EstadoSolicitud.entregada
-          ? usuario.uid
-          : solicitud.entregadoPor,
+    Usuario usuario, {
+    String? observacion,
+  }) async {
+    // Una sola hora, en UTC, para Firestore y para la copia local.
+    final ahora = DateTime.now().toUtc();
+    // El servicio escribe en Firestore y devuelve la solicitud tal como quedó.
+    final actualizada = await remote.cambiarEstado(
+      solicitud,
+      nuevo,
+      usuario,
+      observacion: observacion,
+      fecha: ahora,
     );
     await local.saveSolicitud(actualizada);
     await local.markSynced(actualizada.id);
+    return actualizada;
   }
 }

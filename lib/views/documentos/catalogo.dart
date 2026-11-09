@@ -10,7 +10,7 @@ import '../../service/firebase/crash_service.dart';
 import '../../repository/documento_repository.dart';
 import '../../repository/motivo_repository.dart';
 import '../../repository/solicitud_repository.dart';
-import '../crear_solicitud.dart';
+import '../solicitud/crear_solicitud.dart';
 
 
 class CatalogoScreen extends StatefulWidget {
@@ -57,6 +57,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CatalogoAppBar(
+        title: 'Catálogo',
         usuario: widget.usuario,
         authService: widget.authService,
         crashService: widget.crashService,

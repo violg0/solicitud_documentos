@@ -14,7 +14,7 @@ class MotivoLocalDataSource {
       idSolicitud: row.idSolicitud,
       mensaje: row.mensaje,
       estado: EstadoSolicitud.values.byName(row.estado),
-      fechaCreacion: row.fechaCreacion,
+      fechaCreacion: row.fechaCreacion.toUtc(),
     );
   }
 
@@ -36,5 +36,11 @@ class MotivoLocalDataSource {
           ..where((t) => t.idSolicitud.equals(idSolicitud)))
         .get();
     return rows.map(_toDomain).toList();
+  }
+
+  /// Vacía el historial local (se llama al cerrar sesión): se vuelve a bajar
+  /// de Firestore al abrir cada solicitud.
+  Future<void> borrarTodos() async {
+    await db.delete(db.motivos).go();
   }
 }

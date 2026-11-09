@@ -1,5 +1,4 @@
 // lib/widgets/catalogo_app_bar.dart
-import 'package:flutter/foundation.dart'; // kDebugMode
 import 'package:flutter/material.dart';
 import 'package:solicitud_documentos/models/usuario.dart';
 import 'package:solicitud_documentos/models/rol.dart';
@@ -14,6 +13,7 @@ import 'package:solicitud_documentos/service/firebase/crash_service.dart';
 class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CatalogoAppBar({
     super.key,
+    required this.title,
     required this.usuario,
     required this.authService,
     required this.crashService,
@@ -22,6 +22,7 @@ class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.motivoRepository,
   });
 
+  final String title;
   final Usuario usuario;
   final AuthService authService;
   final CrashService crashService;
@@ -52,7 +53,7 @@ class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Catálogo'),
+      title: Text(title),
       actions: [
         if (usuario.rol == Rol.secretaria || usuario.rol == Rol.revisor)
           IconButton(
@@ -89,15 +90,16 @@ class CatalogoAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-        if (kDebugMode)
-          PopupMenuButton<String>(
-            tooltip: 'QA',
-            onSelected: (v) => _qa(context, v),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'non-fatal', child: Text('Log non-fatal')),
-              PopupMenuItem(value: 'fatal', child: Text('Force fatal crash')),
-            ],
-          ),
+        // Disponible también en release: sirve para generar la evidencia real
+        // de Crashlytics con el APK entregado.
+        PopupMenuButton<String>(
+          tooltip: 'QA',
+          onSelected: (v) => _qa(context, v),
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'non-fatal', child: Text('Log non-fatal')),
+            PopupMenuItem(value: 'fatal', child: Text('Force fatal crash')),
+          ],
+        ),
         IconButton(
           tooltip: 'Cerrar sesión',
           icon: const Icon(Icons.logout),

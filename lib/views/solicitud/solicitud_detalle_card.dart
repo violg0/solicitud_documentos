@@ -1,12 +1,15 @@
 // lib/widgets/solicitud_detalle_card.dart
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter/material.dart';
 import 'package:solicitud_documentos/models/documento.dart';
 import 'package:solicitud_documentos/models/estados.dart';
 import 'package:solicitud_documentos/models/motivo.dart';
+import 'package:solicitud_documentos/models/rol.dart';
 import 'package:solicitud_documentos/models/solicitud.dart';
 import 'package:solicitud_documentos/models/usuario.dart';
 import 'package:solicitud_documentos/repository/motivo_repository.dart';
 import 'package:solicitud_documentos/repository/solicitud_repository.dart';
+import 'package:solicitud_documentos/service/firebase/usuario_service.dart';
 import 'package:solicitud_documentos/validators/solicitud_validators.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,6 +21,8 @@ class SolicitudDetalleCard extends StatefulWidget {
     required this.usuario,
     required this.solicitudRepository,
     required this.motivoRepository,
+    this.pendienteSync = false,
+    this.usuarioService,
   });
 
   final Solicitud solicitud;
@@ -26,13 +31,25 @@ class SolicitudDetalleCard extends StatefulWidget {
   final SolicitudRepository solicitudRepository;
   final MotivoRepository motivoRepository;
 
+  /// Para mostrar el nombre del solicitante / de quien entregó en vez del uid.
+  /// Solo revisor y secretaria pueden leer perfiles ajenos (ver las reglas);
+  /// si es null o la búsqueda falla, se muestra el uid.
+  final UsuarioService? usuarioService;
+
+  /// true si la solicitud sigue pendiente de subir a Firestore (Drift).
+  final bool pendienteSync;
+
   @override
   State<SolicitudDetalleCard> createState() => _SolicitudDetalleCardState();
 }
 
 class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
   late Solicitud _solicitud = widget.solicitud; // local copy, estado changes
+  bool _procesando = false; // true mientras se cambia el estado
   late Future<List<Motivo>> _motivos = _cargarMotivos();
+  late final Future<String> _solicitante = _nombreDe(widget.solicitud.idUsuario);
+  // Se calcula una sola vez; la entrega solo ocurre en este estado final.
+  Future<String>? _entregador;
 
   Future<List<Motivo>> _cargarMotivos() async {
     final lista = await widget.motivoRepository.obtenerPorSolicitud(
@@ -40,6 +57,35 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
     );
     return lista..sort((a, b) => a.fechaCreacion.compareTo(b.fechaCreacion));
   }
+
+  // Nombre (o correo si no hay nombre) del usuario `uid`. Ante cualquier fallo
+  // (sin conexión, sin permiso, no existe) devuelve el uid: nunca rompe.
+  Future<String> _nombreDe(String uid) async {
+    final servicio = widget.usuarioService;
+    if (servicio == null) return uid;
+    try {
+      final u = await servicio
+          .obtenerPorId(uid)
+          .timeout(const Duration(seconds: 8));
+      if (u == null) return uid;
+      if (u.nombre.trim().isNotEmpty) return u.nombre.trim();
+      if (u.email.trim().isNotEmpty) return u.email.trim();
+      return uid;
+    } catch (_) {
+      return uid;
+    }
+  }
+
+  // Muestra "etiqueta: <nombre>"; mientras busca no pinta el uid crudo.
+  Widget _lineaUsuario(String etiqueta, Future<String> nombre) =>
+      FutureBuilder<String>(
+        future: nombre,
+        builder: (context, snap) =>
+            Text('$etiqueta: ${snap.data ?? 'cargando…'}'),
+      );
+
+  // Las fechas se guardan en UTC; se muestran en la hora del dispositivo.
+  String _fecha(DateTime d) => d.toLocal().toString().substring(0, 16);
 
   Future<String?> _pedirMensaje() {
     final controller = TextEditingController();
@@ -63,13 +109,18 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
   }
 
   Future<void> _cambiar(EstadoSolicitud nuevo) async {
-    final mensaje = await _pedirMensaje();
-    if (mensaje == null) return; // user went back
+    if (_procesando) return; // evita dobles toques mientras se procesa
+    setState(() => _procesando = true);
     try {
-      await widget.solicitudRepository.cambiarEstado(
+      final mensaje = await _pedirMensaje();
+      if (mensaje == null) return; // user went back
+      // El mensaje también viaja como observacionRevision cuando el revisor
+      // aprueba o rechaza.
+      final actualizada = await widget.solicitudRepository.cambiarEstado(
         _solicitud,
         nuevo,
         widget.usuario,
+        observacion: mensaje,
       );
       await widget.motivoRepository.crear(
         Motivo(
@@ -77,35 +128,33 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
           idSolicitud: _solicitud.id,
           mensaje: mensaje,
           estado: nuevo,
-          fechaCreacion: DateTime.now(),
+          fechaCreacion: DateTime.now().toUtc(),
         ),
       );
       if (!mounted) return;
       setState(() {
-        _solicitud = Solicitud(
-          id: _solicitud.id,
-          idDocumento: _solicitud.idDocumento,
-          idUsuario: _solicitud.idUsuario,
-          periodo: _solicitud.periodo,
-          observacionEstudiante: _solicitud.observacionEstudiante,
-          estado: nuevo,
-          fechaCreacion: _solicitud.fechaCreacion,
-          fechaModificacion: DateTime.now(),
-          observacionRevision: _solicitud.observacionRevision,
-          fechaEntrega: nuevo == EstadoSolicitud.entregada
-              ? DateTime.now()
-              : _solicitud.fechaEntrega,
-          entregadoPor: nuevo == EstadoSolicitud.entregada
-              ? widget.usuario.uid
-              : _solicitud.entregadoPor,
-        );
+        _solicitud = actualizada;
         _motivos = _cargarMotivos();
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
+      // El servidor rechaza transiciones inválidas (p. ej. entregar dos veces
+      // desde una pantalla desactualizada) y las solicitudes que aún no
+      // existen en Firestore: se explica en vez de mostrar el error técnico.
+      final mensaje = switch (e) {
+        FirebaseException(code: 'permission-denied') =>
+          'Esta solicitud ya cambió de estado. Vuelve a la bandeja y '
+              'actualízala.',
+        FirebaseException(code: 'not-found') =>
+          'Esta solicitud aún no se sincroniza con el servidor. '
+              'Inténtalo de nuevo cuando termine de sincronizar.',
+        _ => e.toString().replaceFirst('Exception: ', ''),
+      };
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mensaje)));
+    } finally {
+      if (mounted) setState(() => _procesando = false);
     }
   }
 
@@ -122,6 +171,7 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
           ) ==
           null,
     );
+    final esEstudiante = widget.usuario.rol == Rol.estudiante;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -139,15 +189,46 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
         Text('Período: ${_solicitud.periodo}'),
         if (_solicitud.observacionEstudiante.isNotEmpty)
           Text('Observación: ${_solicitud.observacionEstudiante}'),
-        Text('Solicitante: ${_solicitud.idUsuario}'),
-        Chip(label: Text(_solicitud.estado.name)),
+        if (_solicitud.observacionRevision != null &&
+            _solicitud.observacionRevision!.isNotEmpty)
+          Text('Observación de revisión: ${_solicitud.observacionRevision}'),
+        // El estudiante ya sabe que la solicitud es suya.
+        if (!esEstudiante) _lineaUsuario('Solicitante', _solicitante),
+        Text('Creada: ${_fecha(_solicitud.fechaCreacion)}'),
+        Text('Última modificación: ${_fecha(_solicitud.fechaModificacion)}'),
+        if (_solicitud.fechaEntrega != null)
+          Text('Entregada: ${_fecha(_solicitud.fechaEntrega!)}'),
+        if (_solicitud.entregadoPor != null)
+          _lineaUsuario(
+            'Entregada por',
+            _entregador ??= _nombreDe(_solicitud.entregadoPor!),
+          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            Chip(label: Text(_solicitud.estado.etiqueta)),
+            if (widget.pendienteSync)
+              const Chip(
+                avatar: Icon(Icons.schedule, size: 18),
+                label: Text('Pendiente de sincronizar'),
+              ),
+          ],
+        ),
         if (acciones.isNotEmpty) ...[
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
               for (final e in acciones)
-                FilledButton(onPressed: () => _cambiar(e), child: Text(e.name)),
+                FilledButton(
+                  onPressed: _procesando ? null : () => _cambiar(e),
+                  child: Text(
+                    e == EstadoSolicitud.cancelada
+                        ? 'Cancelar solicitud'
+                        : e.etiqueta,
+                  ),
+                ),
             ],
           ),
         ],
@@ -168,9 +249,9 @@ class _SolicitudDetalleCardState extends State<SolicitudDetalleCard> {
               children: [
                 for (final m in motivos)
                   ListTile(
-                    title: Text(m.estado.name),
+                    title: Text(m.estado.etiqueta),
                     subtitle: Text(m.mensaje),
-                    trailing: Text(m.fechaCreacion.toString().substring(0, 16)),
+                    trailing: Text(_fecha(m.fechaCreacion)),
                   ),
               ],
             );

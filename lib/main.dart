@@ -38,9 +38,10 @@ Future<void> main() async {
   final firebaseAuth = firebaseReady
       ? FirebaseAuthService(usuarioService)
       : null;
-  final authService = HybridAuthService(firebase: firebaseAuth);
 
   final db = AppDatabase();
+  final solicitudLocal = SolicitudLocalDataSource(db);
+  final motivoLocal = MotivoLocalDataSource(db);
   final documentoRepository = DocumentoRepository(
     local: DocumentoLocalDataSource(db),
     remote: DocumentoService(
@@ -48,13 +49,35 @@ Future<void> main() async {
     ),
   );
   final solicitudRepository = SolicitudRepository(
-    local: SolicitudLocalDataSource(db),
+    local: solicitudLocal,
     remote: SolicitudService(crashService: crashService),
     documentoRepository: documentoRepository,
   );
   final motivoRepository = MotivoRepository(
-    local: MotivoLocalDataSource(db),
+    local: motivoLocal,
     remote: MotivoService(crashService: crashService),
+  );
+
+  // Aislamiento por cuenta: al cerrar sesión se intenta subir lo pendiente de
+  // esa cuenta (máx. 8 s) y se borra la copia local de solicitudes ya
+  // sincronizadas y de motivos, para que otra cuenta en el mismo dispositivo
+  // no vea esos datos. Las solicitudes que no lograron subir se conservan
+  // (no se pierden) y siguen aisladas: solo su dueño las ve o las sincroniza.
+  final authService = HybridAuthService(
+    firebase: firebaseAuth,
+    beforeLogout: (uid) async {
+      if (uid != null) {
+        try {
+          await solicitudRepository
+              .syncPending(idUsuario: uid)
+              .timeout(const Duration(seconds: 8));
+        } catch (_) {
+          // Sin red: quedan pendientes y se conservan.
+        }
+      }
+      await solicitudLocal.borrarSincronizadas();
+      await motivoLocal.borrarTodos();
+    },
   );
 
   runApp(
